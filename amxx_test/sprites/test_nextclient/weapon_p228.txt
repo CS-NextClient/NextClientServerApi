@@ -1,0 +1,5 @@
+3
+
+weapon			640 TBW4	0	138	172	47
+weapon_s		640 TBW4	0	138	172	47
+ammo			640 THUD	0	153	32	31

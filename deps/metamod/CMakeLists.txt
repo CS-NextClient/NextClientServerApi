@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.0.0)
+project(metamod_sdk)
+
+set(METAMOD_SDK_INCLUDE_PATHS
+	${CSSDK_INCLUDE_PATHS}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	PARENT_SCOPE)

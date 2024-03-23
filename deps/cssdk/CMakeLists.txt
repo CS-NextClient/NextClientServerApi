@@ -1,0 +1,26 @@
+cmake_minimum_required(VERSION 3.0.0)
+project(cssdk)
+
+set(CSSDK_INCLUDE_PATHS
+	${CMAKE_CURRENT_SOURCE_DIR}/common
+	${CMAKE_CURRENT_SOURCE_DIR}/dlls
+	${CMAKE_CURRENT_SOURCE_DIR}/engine
+	${CMAKE_CURRENT_SOURCE_DIR}/pm_shared
+	${CMAKE_CURRENT_SOURCE_DIR}/public
+)
+
+set(CSSDK_INCLUDE_PATHS
+    ${CSSDK_INCLUDE_PATHS}
+	PARENT_SCOPE)
+
+set(CSSDK_RUNTIME_SOURCE_FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/public/interface.cpp
+	PARENT_SCOPE)
+
+add_library(${PROJECT_NAME} STATIC
+	public/interface.cpp
+)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+	${CSSDK_INCLUDE_PATHS}
+)

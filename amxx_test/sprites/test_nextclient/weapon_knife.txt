@@ -1,0 +1,4 @@
+2
+
+weapon			640 TBW3	0	92	172	47
+weapon_s		640 TBW3	0	92	172	47

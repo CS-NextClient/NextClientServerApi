@@ -1,0 +1,91 @@
+216
+
+selection			640 TBW2		0	138	172	47
+number_0			640 THUD		0	0	21	29
+number_1			640 THUD		21	0	21	29
+number_2			640 THUD		41	0	21	29
+number_3			640 THUD		62	0	21	29
+number_4			640 THUD		83	0	21	29
+number_5			640 THUD		104	0	21	29
+number_6			640 THUD		125	0	21	29
+number_7			640 THUD		146	0	21	29
+number_8			640 THUD		167	0	21	29
+number_9			640 THUD		188	0	21	29
+dollar				640 THUD		209	0	21	29
+stopwatch			640 THUD		231	0	24	29
+cross				640 THUD		0	29	27	27
+suit_full			640 THUD		51	29	23	27
+suit_empty			640 THUD		27	29	23	27
+suithelmet_full			640 THUD		99	29	23	27
+suithelmet_empty		640 THUD		75	29	23	27
+flash_full			640 THUD		198	30	33	20
+flash_empty			640 THUD		126	30	33	20
+flash_beam			640 THUD		158	30	14	20
+minus				640 THUD		180	30	13	7
+plus				640 THUD		180	36	13	14
+stopwatch			640 THUD		186	29	23	29
+buyzone				640 THUD		0	56	35	35
+rescue				640 THUD		36	56	35	35
+defuser				640 THUD		72	56	35	35
+c4				640 THUD	 	108	56	35	35
+bombticking			640 THUD		108	56	35	35
+bombticking1			640 THUD		108	56	35	35
+vipsafety			640 THUD		144	56	35	35
+escape				640 THUD		180	56	35	35
+hostage4			640 THUD		0	92	54	29
+hostage3			640 THUD		53	91	54	29
+hostage2			640 THUD		106	91	54	29
+hostage1			640 THUD		159	91	54	29
+hostage				640 THUD		0	54	13	31
+bucket1				640 THUD		67	125	21	21
+bucket2				640 THUD		89	125	21	21
+bucket3				640 THUD		111	125	21	21
+bucket4				640 THUD		133	125	21	21
+bucket5				640 THUD		155	125	21	21
+bucket0				640 THUD		180	125	21	21
+
+
+d_ak47          		640 TDW			0	0	52	16
+d_aug				640 TDW	 		0	16	52	20
+d_awp          			640 TDW			0	35	52	13
+d_deagle			640 TDW			0	77	34	21
+d_elite				640 TDW			0	97	50	20
+d_famas				640 TDW			0	116	51	21
+d_fiveseven			640 TDW			0	136	29	21
+d_g3sg1				640 TDW			0	156	52	16
+d_galil				640 TDW			0	171	52	16
+d_glock18			640 TDW			0	186	36	21
+d_grenade			640 TDW			0	206	38	21
+d_knife 	        	640 TDW			0	226	52	13
+d_m249				640 TDW			64	0	48	21
+d_m3				640 TDW			64	20	52	16
+d_m4a1				640 TDW			64	35	52	16
+d_mac10				640 TDW			64	50	21	21
+d_mp5navy			640 TDW			64	70	45	21
+d_p228				640 TDW			64	90	28	21
+d_p90				640 TDW			64	110	47	21
+d_scout				640 TDW			64	130	52	13
+d_sg550				640 TDW			64	142	52	15
+d_sg552				640 TDW			64	157	52	8
+d_tmp				640 TDW			64	174	39	21
+d_ump45				640 TDW			64	194	40	21
+d_usp				640 TDW			64	214	48	21
+d_xm1014			640 TDW			128	0	52	14
+d_skull				640 TDW			128	13	31	20
+d_headshot			640 TDW	 		158	13	22 	19
+d_tracktrain			640 TDW			0	0	16	19
+
+dmg_poison			640 640hud8		128	0	64	64
+dmg_bio				640 640hud8		128	0	64	64
+dmg_chem			640 640hud8		0	0	64	64
+dmg_drown			640 640hud8		64	0	64	64
+dmg_shock			640 640hud8		192	0	64	64
+dmg_gas				640 640hud9		0	0	64	64
+dmg_cold			640 640hud9		64	0	64	64
+dmg_heat			640 640hud9		128	0	64	64
+dmg_rad				640 640hud9		192	0	64	64
+
+radar				640 radar640		0	0	129	129
+radaropaque			640 radaropaque640	0	0	129	129
+
+HUD MADE BY [KOKOROV]

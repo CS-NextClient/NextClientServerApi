@@ -1,0 +1,5 @@
+3
+
+weapon			640 TBW1	0	138	172	47
+weapon_s		640 TBW1	0	138	172	47
+ammo			640 TDW		0	47	26	31
