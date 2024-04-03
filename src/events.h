@@ -79,3 +79,9 @@ class IEventClientDropConnection {
 public:
 	virtual void OnClientDropConnection(int client, bool crash, const char* reason) = 0;
 };
+
+// This event is called right before plugin_precache() is called in amxx plugins
+class IEventAmxxPluginsLoaded {
+public:
+	virtual void OnAmxxPluginsLoaded() = 0;
+};

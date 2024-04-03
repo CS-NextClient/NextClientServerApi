@@ -15,7 +15,8 @@ class EventManager : public IEventPlayerPostThink,
                      public IEventClientVerificated,
                      public IEventSendServerinfo,
                      public IEventNclmVerificationRequest, public IEventNclmVerificationResponse,
-                     public IEventClientEstablishConnection, public IEventClientDropConnection
+                     public IEventClientEstablishConnection, public IEventClientDropConnection,
+                     public IEventAmxxPluginsLoaded
 {
     std::vector<std::shared_ptr<IEventPlayerPostThink>> player_post_think_listeners_;
     std::vector<std::shared_ptr<IEventClientDisconnect>> client_disconnect_listeners_;
@@ -31,6 +32,7 @@ class EventManager : public IEventPlayerPostThink,
     std::vector<std::shared_ptr<IEventSendServerinfo>> send_server_info_listeners_;
     std::vector<std::shared_ptr<IEventClientEstablishConnection>> client_establish_connection_listeners_;
     std::vector<std::shared_ptr<IEventClientDropConnection>> client_drop_connection_listeners_;
+    std::vector<std::shared_ptr<IEventAmxxPluginsLoaded>> amxx_plugins_loaded_listeners_;
 
 public:
     template<typename T>
@@ -50,6 +52,7 @@ public:
         if constexpr (std::is_base_of_v<IEventSendServerinfo, T>) send_server_info_listeners_.push_back(listener);
         if constexpr (std::is_base_of_v<IEventClientEstablishConnection, T>) client_establish_connection_listeners_.push_back(listener);
         if constexpr (std::is_base_of_v<IEventClientDropConnection, T>) client_drop_connection_listeners_.push_back(listener);
+        if constexpr (std::is_base_of_v<IEventAmxxPluginsLoaded, T>) amxx_plugins_loaded_listeners_.push_back(listener);
     }
 
     void OnPlayerPostThink(int client) override;
@@ -66,4 +69,5 @@ public:
     void OnSendServerInfo(int client) override;
     void OnClientEstablishConnection(int client) override;
     void OnClientDropConnection(int client, bool crash, const char* reason) override;
+    void OnAmxxPluginsLoaded() override;
 };

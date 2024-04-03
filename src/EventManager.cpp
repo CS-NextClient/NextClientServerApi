@@ -79,3 +79,9 @@ void EventManager::OnClientDropConnection(int client, bool crash, const char* re
     for (const auto& listener : client_drop_connection_listeners_)
         listener->OnClientDropConnection(client, crash, reason); 
 }
+
+void EventManager::OnAmxxPluginsLoaded()
+{
+    for (const auto& listener : amxx_plugins_loaded_listeners_)
+        listener->OnAmxxPluginsLoaded();
+}

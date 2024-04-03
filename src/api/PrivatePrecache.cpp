@@ -38,6 +38,21 @@ bool PrivatePrecache::PrecacheClientOnly(const std::string& filepath, const std:
 
 void PrivatePrecache::OnClientConnect(int client)
 {
+    TrySendPrivateResourceListLocation(client);
+}
+
+void PrivatePrecache::OnAmxxPluginsLoaded()
+{
+    ClearPrivatePrecache();
+}
+
+void PrivatePrecache::OnClientVerificated(int client, std::string clientVersion, std::string rsaKeyVersion)
+{
+    TrySendPrivateResourceListLocation(client);
+}
+
+void PrivatePrecache::TrySendPrivateResourceListLocation(int client)
+{
     if (!is_resource_list_written_)
     {
         is_resource_list_written_ = WriteResourceListToDisk();
@@ -49,7 +64,7 @@ void PrivatePrecache::OnClientConnect(int client)
     NextClientVersion version;
     NAPI()->GetNextClientVersion(client, version);
 
-    if (version < NextClientVersion{2, 1, 8})
+    if (version < NextClientVersion{2, 4, 0})
         return;
 
     MESSAGE_BEGIN(MSG_ONE, SVC_STUFFTEXT, NULL, INDEXENT(client));
@@ -80,6 +95,13 @@ bool PrivatePrecache::AppendResource(const std::string& filepath, const std::str
     return true;
 }
 
+void PrivatePrecache::ClearPrivatePrecache()
+{
+    is_resource_list_written_ = false;
+    map_resource_list_.clear();
+    DeleteResourceListFromDisk();
+}
+
 bool PrivatePrecache::WriteResourceListToDisk()
 {
     if (map_resource_list_.empty())
@@ -90,9 +112,7 @@ bool PrivatePrecache::WriteResourceListToDisk()
         return false;
 
     for (const auto& entry: map_resource_list_)
-    {
         file << entry.second << std::endl;
-    }
 
     return true;
 }

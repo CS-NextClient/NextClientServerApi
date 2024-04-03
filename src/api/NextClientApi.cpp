@@ -280,27 +280,31 @@ void NextClientApi::OnClientVerificated(int client, std::string clientVersion, s
     MF_Log("Verificated user %s has joined the game (%s, %s)!\n", name, clientVersion.c_str(), rsaKeyVersion.c_str());
 }
 
-int NextClientApi::GetSupportedFeatures(int client) {
+int NextClientApi::GetSupportedFeatures(int client)
+{
     if (players_.count(client) == 0)
         return 0;
 
     auto version = players_[client].client_version.get();
-    if(version == nullptr)
+    if (version == nullptr)
         return 0;
 
     int features = 0;
 
-    if(*version >= NextClientVersion{2, 1, 6})
-        features |= (FEATURE_CVARS_SANDBOX|FEATURE_VIEWMODEL_FX);
+    if (*version >= NextClientVersion{2, 1, 6})
+        features |= (FEATURE_CVARS_SANDBOX | FEATURE_VIEWMODEL_FX);
 
-    if(*version >= NextClientVersion{2, 1, 9})
+    if (*version >= NextClientVersion{2, 1, 9})
         features |= FEATURE_HUD_SPRITE;
 
-   if(*version >= NextClientVersion{2, 2, 0})
+    if (*version >= NextClientVersion{2, 2, 0})
         features |= FEATURE_HUD_SPRITE_RENDERMODE;
 
-    if(*version >= NextClientVersion{2, 3, 0})
-        features |= (FEATURE_VERIFICATION|FEATURE_DEATHMSG_WPN_ICON);
+    if (*version >= NextClientVersion{2, 3, 0})
+        features |= (FEATURE_VERIFICATION | FEATURE_DEATHMSG_WPN_ICON);
+
+    if (*version >= NextClientVersion{2, 4, 0})
+        features |= FEATURE_PRIVATE_PRECACHE;
 
     return features;
 }
@@ -364,4 +368,9 @@ void NextClientApi::OnMessageEndPost()
 
 void NextClientApi::OnSendServerInfo(int client) {
     event_manager_->OnSendServerInfo(client);
+}
+
+void NextClientApi::OnAmxxPluginsLoaded()
+{
+    event_manager_->OnAmxxPluginsLoaded();
 }

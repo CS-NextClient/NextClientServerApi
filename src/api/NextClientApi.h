@@ -106,6 +106,7 @@ public:
     void OnSendServerInfo(int client);
     void OnClientEstablishConnection(int client);
     void OnClientDropConnection(int client, bool crash, const char* reason);
-    
+    void OnAmxxPluginsLoaded();
+
     void OnClientVerificated(int client, std::string clientVersion, std::string rsaKeyVersion) override; 
 };
