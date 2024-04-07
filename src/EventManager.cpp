@@ -65,6 +65,12 @@ void EventManager::OnNclmVerificationResponse(int client, std::string clientVers
         listener->OnNclmVerificationResponse(client, clientVersion, payload);
 }
 
+void EventManager::OnNclmDeclareVersionRequest(int client, std::string clientVersion)
+{
+    for (const auto& listener : nclm_declare_version_request_listeners_)
+        listener->OnNclmDeclareVersionRequest(client, clientVersion);
+}
+
 void EventManager::OnSendServerInfo(int client) {
     for (const auto& listener : send_server_info_listeners_)
         listener->OnSendServerInfo(client); 

@@ -10,7 +10,7 @@ constexpr size_t RSA_KEY_LENGTH =			256;
 constexpr size_t NCLM_VERIF_PAYLOAD_SIZE =	196;
 constexpr size_t NCLM_VERIF_ENCRYPTED_PAYLOAD_SIZE = ((NCLM_VERIF_PAYLOAD_SIZE / RSA_KEY_LENGTH) + 1) * RSA_KEY_LENGTH;
 
-enum NCLM_C2S {
+enum class NCLM_C2S {
 	/*
 		byte		Message header
 		string		Prefered RSA public key version
@@ -19,13 +19,19 @@ enum NCLM_C2S {
 
 	/*
 		byte		Message header
-		string		Client version in SemVer notation 
+		string		Client version in SemVer notation
 		196 bytes	Decrypted message payload
 	*/
-	VERIFICATION_RESPONSE
+	VERIFICATION_RESPONSE,
+
+	/*
+	 * Used to tell the server the version of NextClient in use
+	 * when the private key in the client is not configured.
+	 */
+	DECLARE_VERSION_REQUEST
 };
 
-enum NCLM_S2C {
+enum class NCLM_S2C {
 	/*
 		byte		Message header
 		256 bytes	Encrypted message payload

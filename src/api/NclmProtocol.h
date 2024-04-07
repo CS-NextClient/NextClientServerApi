@@ -10,6 +10,7 @@ class NclmProtocol : public IEventHandleNclMessage {
 
 	void OnVerificationRequest(int client);
 	void OnVerificationResponse(int client);
+	void OnDeclareVersionRequest(int client);
 
 	sizebuf_t* GetClientReliableChannel(int client);
 	sizebuf_t* GetClientUnrealibleChannel(int client);

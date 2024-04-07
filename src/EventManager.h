@@ -14,7 +14,7 @@ class EventManager : public IEventPlayerPostThink,
                      public IEventMessageEndPost,
                      public IEventClientVerificated,
                      public IEventSendServerinfo,
-                     public IEventNclmVerificationRequest, public IEventNclmVerificationResponse,
+                     public IEventNclmVerificationRequest, public IEventNclmVerificationResponse, public IEventNclmDeclareVersionRequest,
                      public IEventClientEstablishConnection, public IEventClientDropConnection,
                      public IEventAmxxPluginsLoaded
 {
@@ -29,6 +29,7 @@ class EventManager : public IEventPlayerPostThink,
     std::vector<std::shared_ptr<IEventClientVerificated>> client_verificated_listeners_;
     std::vector<std::shared_ptr<IEventNclmVerificationRequest>> nclm_verification_request_listeners_;
     std::vector<std::shared_ptr<IEventNclmVerificationResponse>> nclm_verification_response_listeners_;
+    std::vector<std::shared_ptr<IEventNclmDeclareVersionRequest>> nclm_declare_version_request_listeners_;
     std::vector<std::shared_ptr<IEventSendServerinfo>> send_server_info_listeners_;
     std::vector<std::shared_ptr<IEventClientEstablishConnection>> client_establish_connection_listeners_;
     std::vector<std::shared_ptr<IEventClientDropConnection>> client_drop_connection_listeners_;
@@ -49,6 +50,7 @@ public:
         if constexpr (std::is_base_of_v<IEventClientVerificated, T>) client_verificated_listeners_.push_back(listener);
         if constexpr (std::is_base_of_v<IEventNclmVerificationRequest, T>) nclm_verification_request_listeners_.push_back(listener);
         if constexpr (std::is_base_of_v<IEventNclmVerificationResponse, T>) nclm_verification_response_listeners_.push_back(listener);
+        if constexpr (std::is_base_of_v<IEventNclmDeclareVersionRequest, T>) nclm_declare_version_request_listeners_.push_back(listener);
         if constexpr (std::is_base_of_v<IEventSendServerinfo, T>) send_server_info_listeners_.push_back(listener);
         if constexpr (std::is_base_of_v<IEventClientEstablishConnection, T>) client_establish_connection_listeners_.push_back(listener);
         if constexpr (std::is_base_of_v<IEventClientDropConnection, T>) client_drop_connection_listeners_.push_back(listener);
@@ -66,6 +68,7 @@ public:
     void OnClientVerificated(int client, std::string clientVersion, std::string rsaKeyVersion) override;
     void OnNclmVerificationRequest(int client, std::string rsaKeyVersion) override;
     void OnNclmVerificationResponse(int client, std::string clientVersion, std::vector<uint8_t> payload) override;
+    void OnNclmDeclareVersionRequest(int client, std::string clientVersion) override;
     void OnSendServerInfo(int client) override;
     void OnClientEstablishConnection(int client) override;
     void OnClientDropConnection(int client, bool crash, const char* reason) override;

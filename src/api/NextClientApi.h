@@ -17,7 +17,7 @@
 #include "NclmProtocol.h"
 #include "DeathMsgWpnIcon.h"
 
-class NextClientApi : public INextClientAPI, public IEventClientVerificated
+class NextClientApi : public INextClientAPI, public IEventClientVerificated, public IEventNclmDeclareVersionRequest
 {
     struct PlayerData {
         ncl_deprecated::NextClientVersion deprecated_client_version;
@@ -108,5 +108,6 @@ public:
     void OnClientDropConnection(int client, bool crash, const char* reason);
     void OnAmxxPluginsLoaded();
 
-    void OnClientVerificated(int client, std::string clientVersion, std::string rsaKeyVersion) override; 
+    void OnClientVerificated(int client, std::string clientVersion, std::string rsaKeyVersion) override;
+	void OnNclmDeclareVersionRequest(int client, std::string clientVersion) override;
 };

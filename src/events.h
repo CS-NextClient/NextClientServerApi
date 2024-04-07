@@ -60,6 +60,12 @@ public:
 	virtual void OnNclmVerificationResponse(int client, std::string clientVersion, std::vector<uint8_t> payload) = 0;
 };
 
+class IEventNclmDeclareVersionRequest
+{
+public:
+	virtual void OnNclmDeclareVersionRequest(int client, std::string clientVersion) = 0;
+};
+
 class IEventClientVerificated {
 public:
 	virtual void OnClientVerificated(int client, std::string clientVersion, std::string rsaKeyVersion) = 0;
