@@ -60,6 +60,12 @@ public:
 	virtual void OnNclmVerificationResponse(int client, std::string clientVersion, std::vector<uint8_t> payload) = 0;
 };
 
+class IEventNclmDeclareVersionRequest
+{
+public:
+	virtual void OnNclmDeclareVersionRequest(int client, std::string clientVersion) = 0;
+};
+
 class IEventClientVerificated {
 public:
 	virtual void OnClientVerificated(int client, std::string clientVersion, std::string rsaKeyVersion) = 0;
@@ -78,4 +84,10 @@ public:
 class IEventClientDropConnection {
 public:
 	virtual void OnClientDropConnection(int client, bool crash, const char* reason) = 0;
+};
+
+// This event is called right before plugin_precache() is called in amxx plugins
+class IEventAmxxPluginsLoaded {
+public:
+	virtual void OnAmxxPluginsLoaded() = 0;
 };

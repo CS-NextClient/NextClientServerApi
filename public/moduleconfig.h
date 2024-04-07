@@ -26,7 +26,7 @@
  *   to add multiple entries.
  */
 #define MODULE_NAME "Next Client API"
-#define MODULE_VERSION "1.4.0"
+#define MODULE_VERSION "1.5.0-beta.3"
 #define MODULE_AUTHOR "Next21 Team"
 #define MODULE_URL "https://github.com/CS-NextClient/NextClientServerApi"
 #define MODULE_LOGTAG "nclapi"
@@ -82,7 +82,7 @@
 /** All plugins loaded
  * Do forward functions init here (MF_RegisterForward)
  */
-//#define FN_AMXX_PLUGINSLOADED OnPluginsLoaded
+#define FN_AMXX_PLUGINSLOADED OnPluginsLoaded
 
 /** All plugins are about to be unloaded */
 //#define FN_AMXX_PLUGINSUNLOADING OnPluginsUnloading

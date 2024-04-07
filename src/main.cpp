@@ -130,6 +130,12 @@ void OnAmxxAttach()
     MF_PrintSrvConsole("[%s] Successfully loaded, version %s\n", MODULE_NAME, MODULE_VERSION);
 }
 
+void OnPluginsLoaded()
+{
+    if (g_NextClientApi)
+        g_NextClientApi->OnAmxxPluginsLoaded();
+}
+
 void OnAmxxDetach()
 {
     g_NextClientApi = nullptr;

@@ -184,27 +184,27 @@ void NextClientApi::OnClientEstablishConnection(int client) {
         using ncl_deprecated::NextClientVersion;
 
         if (value == "20") {
-            *data.client_version.get() = { 2, 2, 0 };
+            *data.client_version = { 2, 2, 0 };
             data.deprecated_client_version = NextClientVersion::V_2_2_0;
         }
         else if (value == "18") {
-            *data.client_version.get() = { 2, 1, 8 };
+            *data.client_version = { 2, 1, 8 };
             data.deprecated_client_version = NextClientVersion::V_2_1_8;
         }
         else if (value == "19") {
-            *data.client_version.get() = { 2, 1, 9 };
+            *data.client_version = { 2, 1, 9 };
             data.deprecated_client_version = NextClientVersion::V_2_1_9;
         }
         else if (value == "110") {
-            *data.client_version.get() = { 2, 1, 10 };
+            *data.client_version = { 2, 1, 10 };
             data.deprecated_client_version = NextClientVersion::V_2_1_10;
         }
         else if (value == "111") {
-            *data.client_version.get() = { 2, 1, 11 };
+            *data.client_version = { 2, 1, 11 };
             data.deprecated_client_version = NextClientVersion::V_2_1_11;
         }
         else if (value == "112") {
-            *data.client_version.get() = { 2, 1, 12 };
+            *data.client_version = { 2, 1, 12 };
             data.deprecated_client_version = NextClientVersion::V_2_1_12;
         }
         else if (value[0] == '1')
@@ -280,27 +280,48 @@ void NextClientApi::OnClientVerificated(int client, std::string clientVersion, s
     MF_Log("Verificated user %s has joined the game (%s, %s)!\n", name, clientVersion.c_str(), rsaKeyVersion.c_str());
 }
 
-int NextClientApi::GetSupportedFeatures(int client) {
+void NextClientApi::OnNclmDeclareVersionRequest(int client, std::string clientVersion)
+{
+    if (players_.count(client) == 0)
+        return;
+
+    auto player = &players_[client];
+    player->is_verificated = false;
+    player->is_using_nextclient = true;
+
+    auto name = MF_GetPlayerName(client);
+
+    if(!ParseVersion(clientVersion, *player->client_version.get()))
+        MF_Log("%s has a bogus version of nextclient (%s)", name, clientVersion.c_str());
+
+    MF_Log("NextClient compatibile user %s has joined the game (%s)!\n", name, clientVersion.c_str());
+}
+
+int NextClientApi::GetSupportedFeatures(int client)
+{
     if (players_.count(client) == 0)
         return 0;
 
     auto version = players_[client].client_version.get();
-    if(version == nullptr)
+    if (version == nullptr)
         return 0;
 
     int features = 0;
 
-    if(*version >= NextClientVersion{2, 1, 6})
-        features |= (FEATURE_CVARS_SANDBOX|FEATURE_VIEWMODEL_FX);
+    if (*version >= NextClientVersion{2, 1, 6})
+        features |= (FEATURE_CVARS_SANDBOX | FEATURE_VIEWMODEL_FX);
 
-    if(*version >= NextClientVersion{2, 1, 9})
+    if (*version >= NextClientVersion{2, 1, 9})
         features |= FEATURE_HUD_SPRITE;
 
-   if(*version >= NextClientVersion{2, 2, 0})
+    if (*version >= NextClientVersion{2, 2, 0})
         features |= FEATURE_HUD_SPRITE_RENDERMODE;
 
-    if(*version >= NextClientVersion{2, 3, 0})
-        features |= (FEATURE_VERIFICATION|FEATURE_DEATHMSG_WPN_ICON);
+    if (*version >= NextClientVersion{2, 3, 0})
+        features |= (FEATURE_VERIFICATION | FEATURE_DEATHMSG_WPN_ICON);
+
+    if (*version >= NextClientVersion{2, 4, 0})
+        features |= FEATURE_PRIVATE_PRECACHE;
 
     return features;
 }
@@ -364,4 +385,9 @@ void NextClientApi::OnMessageEndPost()
 
 void NextClientApi::OnSendServerInfo(int client) {
     event_manager_->OnSendServerInfo(client);
+}
+
+void NextClientApi::OnAmxxPluginsLoaded()
+{
+    event_manager_->OnAmxxPluginsLoaded();
 }

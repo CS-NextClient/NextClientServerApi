@@ -15,20 +15,20 @@ new LOG_FILE[] = "test_nextclient_api.log";
 #define AUTO_RESTORE_CVAR_VALUES
 
 // ncl_precache_model() for default, already exists on client models like default weapon models
-// #define TEST_PRECACHE_AND_REPLACE_DEFAULT_MODELS
+#define TEST_PRECACHE_AND_REPLACE_DEFAULT_MODELS
 
 // ncl_precache_sound() for default, already exists on client sounds like steps
-// #define TEST_PRECACHE_AND_REPLACE_DEFAULT_SOUNDS
+#define TEST_PRECACHE_AND_REPLACE_DEFAULT_SOUNDS
 
 // Test of replace default hud.txt and HUD sprites
 // ncl_precache_hudtxt() & ncl_precache_client_only()
-// #define TEST_PRECACHE_AND_REPLACE_HUD
+#define TEST_PRECACHE_AND_REPLACE_HUD
 
 // ncl_precache_model() for custom model
-// #define TEST_PRECACHE_AND_REPLACE_CUSTOM_MODELS
+#define TEST_PRECACHE_AND_REPLACE_CUSTOM_MODELS
 
 // ncl_precache_sound() for custom sound
-// #define TEST_PRECACHE_AND_REPLACE_CUSTOM_SOUNDS
+#define TEST_PRECACHE_AND_REPLACE_CUSTOM_SOUNDS
 
 new const HUD_SPRITE_KILL[] = "sprites/test_nextclient/hud_sprites/kill.spr"
 new const HUD_SPRITE_BLACK_HOLE[] = "sprites/test_nextclient/hud_sprites/ef_blackhole_loop.spr"

@@ -43,12 +43,16 @@ NclmProtocol::NclmProtocol(EventManager* event_manager)
 
 void NclmProtocol::OnHandleNCLMessage(int client, NCLM_C2S opcode) {
 	switch (opcode) {
-	case VERIFICATION_REQUEST:
+	case NCLM_C2S::VERIFICATION_REQUEST:
 		OnVerificationRequest(client);
 		break;
 
-	case VERIFICATION_RESPONSE:
+	case NCLM_C2S::VERIFICATION_RESPONSE:
 		OnVerificationResponse(client);
+		break;
+
+	case NCLM_C2S::DECLARE_VERSION_REQUEST:
+		OnDeclareVersionRequest(client);
 		break;
 	}
 }
@@ -77,6 +81,15 @@ void NclmProtocol::OnVerificationResponse(int client) {
 	event_manager_->OnNclmVerificationResponse(client, clientVersion, payload);
 }
 
+void NclmProtocol::OnDeclareVersionRequest(int client)
+{
+	std::string clientVersion = MSG_ReadString();
+
+	NAPI_LOG_ASSERT(!MSG_IsBadRead(), "%s: badread on %s", __FUNCTION__, MF_GetPlayerName(client));
+
+	event_manager_->OnNclmDeclareVersionRequest(client, clientVersion);
+}
+
 sizebuf_t* NclmProtocol::GetClientReliableChannel(int client) {
 	auto cl = g_RehldsApi->GetServerStatic()->GetClient(client - 1);
 	return cl->GetNetChan()->GetMessageBuf();
@@ -90,7 +103,7 @@ sizebuf_t* NclmProtocol::GetClientUnrealibleChannel(int client) {
 void NclmProtocol::SendVerificationPayload(int client, std::vector<uint8_t> payload) {
 	NclmSizeBufWriter message(GetClientReliableChannel(client), 0x140);
 
-	message.WriteByte(NCLM_S2C::VERIFICATION_PAYLOAD)
+	message.WriteByte((int)NCLM_S2C::VERIFICATION_PAYLOAD)
 		->WriteBuf(payload)
 		->Send();
 }
