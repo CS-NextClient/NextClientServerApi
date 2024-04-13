@@ -1,10 +1,11 @@
 #pragma once
 
+#include <commonmacros.h>
+
 #define clc_ncl_message						3			// clc_stringcmd
 #define SVC_NCL_MESSAGE						57			// SVC_SENDCVARVALUE
-#define NCLM_HEADER							0x616C636E 	// ncla
-
-#include <stddef.h>
+#define NCLM_HEADER_OLD						MAKEID('n', 'c', 'l', 'a')
+#define NCLM_HEADER							MAKEID('n', 'c', 'l', 'm')
 
 constexpr size_t RSA_KEY_LENGTH =			256;
 constexpr size_t NCLM_VERIF_PAYLOAD_SIZE =	196;

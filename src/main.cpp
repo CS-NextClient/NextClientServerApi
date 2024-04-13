@@ -74,14 +74,33 @@ void SV_HandleClientMessage(IRehldsHook_HandleNetCommand* hookchain, IGameClient
         auto netMessage = g_RehldsFuncs->GetNetMessage();
         int* readcount = g_RehldsFuncs->GetMsgReadCount();
 
-        if (*(uint32_t*) (netMessage->data + *readcount) == NCLM_HEADER)
+        uint32_t header = *(uint32_t*) (netMessage->data + *readcount);
+        if (header == NCLM_HEADER || header == NCLM_HEADER_OLD)
+            *readcount += sizeof(uint32_t);
+
+        if (header == NCLM_HEADER)
         {
-            *readcount += 4;
+            int32_t size = MSG_ReadLong();
+            int32_t fullreadcount = *readcount + size - (int32_t)sizeof(size);
+
             auto nclm_opcode = static_cast<NCLM_C2S>(MSG_ReadByte());
 
             if (g_NextClientApi)
                 g_NextClientApi->OnHandleNCLMessage(apiClient->GetId() + 1, nclm_opcode);
-                
+
+            if (*readcount < fullreadcount)
+                *readcount = fullreadcount;
+
+            return;
+        }
+
+        if (header == NCLM_HEADER_OLD)
+        {
+            auto nclm_opcode = static_cast<NCLM_C2S>(MSG_ReadByte());
+
+            if (g_NextClientApi)
+                g_NextClientApi->OnHandleNCLMessage(apiClient->GetId() + 1, nclm_opcode);
+
             return;
         }
     }

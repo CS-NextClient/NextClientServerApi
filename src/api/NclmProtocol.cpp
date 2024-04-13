@@ -12,7 +12,7 @@ public:
 	NclmSizeBufWriter(sizebuf_t* output_buf, size_t maxsize)
 		: SizeBufWriter(output_buf, maxsize) {
 		WriteByte(SVC_NCL_MESSAGE);
-		WriteLong(NCLM_HEADER);
+		WriteLong(NCLM_HEADER_OLD);
 	}
 
 	std::map<uint8_t, uint8_t> escaping_symbols_ = {
