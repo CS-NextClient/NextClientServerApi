@@ -49,7 +49,13 @@ enum eSandboxCvar
     SC_r_decals,
     // since Next Client v2.2.0
     SC_cl_yawspeed,
-    SC_cl_pitchspeed
+    SC_cl_pitchspeed,
+    // since Next Client v2.4.0
+    SC_cl_fog_density,
+    SC_cl_fog_r,
+    SC_cl_fog_g,
+    SC_cl_fog_b,
+    SC_viewmodel_fov
 }
 
 enum eNclVersion
