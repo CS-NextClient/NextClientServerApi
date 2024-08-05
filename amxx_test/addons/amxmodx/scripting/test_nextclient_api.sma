@@ -238,7 +238,9 @@ new const CVAR_STRING[eSandboxCvar][] = {
     "cl_crosshair_type",        "cl_crosshair_size",    "cl_crosshair_color",
     "cl_crosshair_translucent", "cl_weather",           "cl_min_t",
     "cl_min_ct",                "cl_corpsestay",        "r_decals",
-    "cl_yawspeed",              "cl_pitchspeed"
+    "cl_yawspeed",              "cl_pitchspeed",        "cl_fog_density",
+    "cl_fog_r",                 "cl_fog_g",             "cl_fog_b",
+    "viewmodel_fov"
 };
 
 new const CVAR_VALUES[eSandboxCvar][] = {
@@ -252,7 +254,9 @@ new const CVAR_VALUES[eSandboxCvar][] = {
     "2",        "auto",     "177 177 177",
     "1",        "3",        "2",
     "2",        "17",       "0",
-    "110",      "120"
+    "110",      "120",      "0",
+    "177",      "177",      "177",
+    "80"
 };
 
 public cmd_ncl_test_sandbox_cvars(id) {

@@ -38,7 +38,13 @@ enum SandboxCvar {
     r_decals,
     // since Next Client v2.2.0
     cl_yawspeed,
-    cl_pitchspeed
+    cl_pitchspeed,
+	// since Next Client v2.4.0
+	cl_fog_density,
+    cl_fog_r,
+    cl_fog_g,
+    cl_fog_b,
+    viewmodel_fov
 };
 
 class ICvarSandbox
