@@ -498,115 +498,115 @@ public cmd_ncl_hudsprite_set(id) {
     ncl_send_hud_sprite(
         .id = id,
         .channel = 0,
-        .spritePath = HUD_SPRITE_KILL,
-        .spriteColor = _,
+        .sprite_path = HUD_SPRITE_KILL,
+        .sprite_color = _,
         .alpha = _,
         .frame = _,
-        .frameRate = _,
-        .inTime = _,
-        .holdTime = 5.0,
-        .outTime = 1.0,
+        .framerate = _,
+        .in_time = _,
+        .hold_time = 5.0,
+        .out_time = 1.0,
         .x = 0.0,
         .y = 0.0,
-        .spriteRect = { 100, 0, 200, 100 },
-        .scaleX = _,
-        .scaleY = _
+        .sprite_rect = { 100, 0, 200, 100 },
+        .scale_x = _,
+        .scale_y = _
     )
 
     // left-center x-scaled
     ncl_send_hud_sprite(
         .id = id,
         .channel = 1,
-        .spritePath = HUD_SPRITE_KILL,
-        .spriteColor = _,
+        .sprite_path = HUD_SPRITE_KILL,
+        .sprite_color = _,
         .alpha = _,
         .frame = _,
-        .frameRate = _,
-        .inTime = 3.0,
-        .holdTime = 6.0,
-        .outTime = 3.0,
+        .framerate = _,
+        .in_time = 3.0,
+        .hold_time = 6.0,
+        .out_time = 3.0,
         .x = 0.0,
         .y = -1.0,
-        .spriteRect = { 100, 0, 200, 100 },
-        .scaleX = 2.0,
-        .scaleY = _
+        .sprite_rect = { 100, 0, 200, 100 },
+        .scale_x = 2.0,
+        .scale_y = _
     )
 
     // left-bottom y-scaled
     ncl_send_hud_sprite(
         .id = id,
         .channel = 2,
-        .spritePath = HUD_SPRITE_KILL,
-        .spriteColor = _,
+        .sprite_path = HUD_SPRITE_KILL,
+        .sprite_color = _,
         .alpha = _,
         .frame = _,
-        .frameRate = _,
-        .inTime = 1.0,
-        .holdTime = _,
-        .outTime = _,
+        .framerate = _,
+        .in_time = 1.0,
+        .hold_time = _,
+        .out_time = _,
         .x = 0.0,
         .y = 1.0,
-        .spriteRect = { 100, 0, 200, 100 },
-        .scaleX = _,
-        .scaleY = 4.0
+        .sprite_rect = { 100, 0, 200, 100 },
+        .scale_x = _,
+        .scale_y = 4.0
     )
 
     // right-top-red
     ncl_send_hud_sprite(
         .id = id,
         .channel = 3,
-        .spritePath = HUD_SPRITE_KILL,
-        .spriteColor = { 255, 0, 0 },
+        .sprite_path = HUD_SPRITE_KILL,
+        .sprite_color = { 255, 0, 0 },
         .alpha = _,
         .frame = _,
-        .frameRate = _,
-        .inTime = 1.0,
-        .holdTime = _,
-        .outTime = _,
+        .framerate = _,
+        .in_time = 1.0,
+        .hold_time = _,
+        .out_time = _,
         .x = 1.0,
         .y = 0.0,
-        .spriteRect = { 100, 0, 200, 100 },
-        .scaleX = _,
-        .scaleY = _
+        .sprite_rect = { 100, 0, 200, 100 },
+        .scale_x = _,
+        .scale_y = _
     )
 
     // center / auto-size
     ncl_send_hud_sprite(
         .id = id,
         .channel = 4,
-        .spritePath = HUD_SPRITE_BLACK_HOLE,
-        .spriteColor = _,
+        .sprite_path = HUD_SPRITE_BLACK_HOLE,
+        .sprite_color = _,
         .alpha = _,
         .frame = _,
-        .frameRate = 2.0,
-        .inTime = _,
-        .holdTime = _,
-        .outTime = _,
+        .framerate = 2.0,
+        .in_time = _,
+        .hold_time = _,
+        .out_time = _,
         .x = -1.0,
         .y = -1.0,
-        .spriteRect = _,
-        .scaleX = _,
-        .scaleY = _
+        .sprite_rect = _,
+        .scale_x = _,
+        .scale_y = _
     )
 
     // right-bottom + auto-size + alpha
     ncl_send_hud_sprite(
         .id = id,
         .channel = 5,
-        .spritePath = HUD_SPRITE_BLACK_HOLE,
-        .spriteColor = _,
+        .sprite_path = HUD_SPRITE_BLACK_HOLE,
+        .sprite_color = _,
         .alpha = 127,
         .frame = _,
-        .frameRate = _,
-        .inTime = 2.0,
-        .holdTime = 2.0,
-        .outTime = 2.0,
+        .framerate = _,
+        .in_time = 2.0,
+        .hold_time = 2.0,
+        .out_time = 2.0,
         .x = 1.0,
         .y = 1.0,
-        .spriteRect = _,
-        .scaleX = _,
-        .scaleY = _,
-        .renderMode = kRenderNormal
+        .sprite_rect = _,
+        .scale_x = _,
+        .scale_y = _,
+        .rendermode = kRenderNormal
     )
 
     // skip 6 channel
@@ -615,14 +615,14 @@ public cmd_ncl_hudsprite_set(id) {
     ncl_send_hud_sprite_full_screen(
         .id = id,
         .channel = 7,
-        .spritePath = HUD_SPRITE_KILL,
-        .spriteColor = _,
+        .sprite_path = HUD_SPRITE_KILL,
+        .sprite_color = _,
         .alpha = _,
         .frame = _,
-        .frameRate = _,
-        .inTime = _,
-        .holdTime = _,
-        .outTime = _
+        .framerate = _,
+        .in_time = _,
+        .hold_time = _,
+        .out_time = _
     )
 
     return PLUGIN_HANDLED;

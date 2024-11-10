@@ -285,7 +285,8 @@ native ncl_setfov(id, fov, Float:time);
 
 /**
  * Separate precaching of the model for regular cs 1.6 client and NextClient.
- * For NextClient: 
+ * For NextClient:
+ * - uploading is done in a private directory related to a specific server;
  * - allows to overwrite default models;
  * - allows to update an existing model on the client when it changed on the server.
  *
@@ -301,7 +302,8 @@ native ncl_precache_model(const filepath[], const ncl_filepath[]);
 
 /**
  * Separate precaching of the sound for regular cs 1.6 client and NextClient. 
- * For NextClient: 
+ * For NextClient:
+ * - uploading is done in a private directory related to a specific server;
  * - allows to overwrite default sounds;
  * - allows to update an existing model on the client when it changed on the server.
  *
@@ -316,12 +318,11 @@ native ncl_precache_model(const filepath[], const ncl_filepath[]);
 native ncl_precache_sound(const filepath[], const ncl_filepath[]);
 
 /**
- * Client only precaching, allows to override default resources, such hud.txt and default sprites.
+ * Uploads the file for NextClient players to a private directory.
  *
- * @note For security reason at this moment allows to precache only hud.txt and sprites.
+ * @note You can only upload spr and txt files.
  * 
  * @param filepath       Saving path on client (regarding the mod directory)
- * @param ncl_filepath   Downloading path on server (regarding the mod directory)
  *
  * @noreturn
  * @error                If called outside of the plugin_precache() forward, an error is thrown.
