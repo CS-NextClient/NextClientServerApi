@@ -22,7 +22,7 @@ public:
 
 	int PrecacheModel(const std::string& filepath, const std::string& nclFilepath) override;
 	int PrecacheSound(const std::string& filepath, const std::string& nclFilepath) override;
-	bool PrecacheClientOnly(const std::string& filepath, const std::string& nclFilepath) override;
+	bool UploadFile(const std::string& filepath, const std::string& nclFilepath) override;
 
 	void OnClientConnect(int client) override;
 	void OnAmxxPluginsLoaded() override;

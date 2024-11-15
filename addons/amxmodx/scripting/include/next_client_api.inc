@@ -286,14 +286,14 @@ native ncl_setfov(id, fov, Float:time);
 /**
  * Separate precaching of the model for regular cs 1.6 client and NextClient.
  * For NextClient:
- * - uploading is done in a private directory related to a specific server;
+ * - uploading is done in a server's private directory;
  * - allows to overwrite default models;
  * - allows to update an existing model on the client when it changed on the server.
  *
  * @note Can only be used inside of the plugin_precache() forward.
  * 
  * @param filepath       Path to the model file
- * @param ncl_filepath   Path to the model file which will be preached to NextClient players (will be saved as filepath)
+ * @param ncl_filepath   Path to the model file on server, which will be preached to NextClient players. On the client side, the file will be saved at filepath in the private directory of the server.
  *
  * @return               Unique cache id of the model
  * @error                If called outside of the plugin_precache() forward, an error is thrown.
@@ -303,35 +303,45 @@ native ncl_precache_model(const filepath[], const ncl_filepath[]);
 /**
  * Separate precaching of the sound for regular cs 1.6 client and NextClient. 
  * For NextClient:
- * - uploading is done in a private directory related to a specific server;
+ * - uploading is done in a server's private directory;
  * - allows to overwrite default sounds;
- * - allows to update an existing model on the client when it changed on the server.
+ * - allows to update an existing sound on the client when it changed on the server;
+ * - supported audio formats: wav, flac, ogg, mp3
  *
  * @note Can only be used inside of the plugin_precache() forward.
  * 
  * @param filepath       Path to the sound file
- * @param ncl_filepath   Path to the sound file which will be preached to NextClient players (will be saved as filepath)
+ * @param ncl_filepath   Path to the sound file on server, which will be preached to NextClient players. On the client side, the file will be saved at filepath in the private directory of the server.
  *
  * @return               Unique cache id of the sound
  * @error                If called outside of the plugin_precache() forward, an error is thrown.
  */
 native ncl_precache_sound(const filepath[], const ncl_filepath[]);
 
+
 /**
- * Uploads the file for NextClient players to a private directory.
+ * Uploads a file for NextClient players, without a precache on the server.
+ * Features:
+ * - uploading is done in a server's private directory;
+ * - allows to overwrite default files;
+ * - allows to update an existing file on the client when it changed on the server.
+ * Limitations:
+ * - only spr, txt, wav, flac, ogg and mp3 files can be uploaded;
+ * - spr and txt files can only be uploaded to the 'sprites/' directory;
+ * - audio files can only be uploaded to the 'sound/' directory;
+ * - spr files can NOT override standard sprites
  *
- * @note You can only upload spr and txt files.
- * 
- * @param filepath       Saving path on client (regarding the mod directory)
+ * @param filepath_server   Path to the file on server (regarding the cstrike/ directory)
+ * @param filepath_client   Path to the file on client (regarding the cstrike/ directory)
  *
  * @noreturn
  * @error                If called outside of the plugin_precache() forward, an error is thrown.
  */
-native ncl_precache_client_only(const filepath[], const ncl_filepath[]);
+native ncl_upload_file(const filepath_server[], const filepath_client[]);
 
-stock ncl_precache_hudtxt(const ncl_filepath[])
+stock ncl_upload_hudtxt(const filepath_server[])
 {
-    ncl_precache_client_only("sprites/hud.txt", ncl_filepath);
+   ncl_upload_file("sprites/hud.txt", filepath_server);
 }
 
 stock const MAX_HUD_SPRITE_CHANNELS = 32;

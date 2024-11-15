@@ -21,7 +21,7 @@ new LOG_FILE[] = "test_nextclient_api.log";
 #define TEST_PRECACHE_AND_REPLACE_DEFAULT_SOUNDS
 
 // Test of replace default hud.txt and HUD sprites
-// ncl_precache_hudtxt() & ncl_precache_client_only()
+// ncl_upload_hudtxt() & ncl_precache_client_only()
 #define TEST_PRECACHE_AND_REPLACE_HUD
 
 // ncl_precache_model() for custom model
@@ -670,7 +670,7 @@ public plugin_precache() {
 #endif
 
 #if defined TEST_PRECACHE_AND_REPLACE_HUD
-    test_ncl_precache_client_only();
+    test_ncl_upload_file();
 #endif
 
 #if defined TEST_PRECACHE_AND_REPLACE_CUSTOM_MODELS
@@ -711,21 +711,21 @@ public test_ncl_precache_and_replace_default_sound() {
 
 /* <=======> */
 
-public test_ncl_precache_client_only() {
-    log_to_file(LOG_FILE, "~ Testing ncl_precache_client_only() for hud.txt and HUD sprites is active.");
+public test_ncl_upload_file() {
+    log_to_file(LOG_FILE, "~ Testing ncl_upload_file() for hud.txt and HUD sprites is active.");
 
-    ncl_precache_client_only("sprites/TBW1.spr",    "sprites/test_nextclient/TBW1.spr"  );
-    ncl_precache_client_only("sprites/TBW2.spr",    "sprites/test_nextclient/TBW2.spr"  );
-    ncl_precache_client_only("sprites/TBW3.spr",    "sprites/test_nextclient/TBW3.spr"  );
-    ncl_precache_client_only("sprites/TBW4.spr",    "sprites/test_nextclient/TBW4.spr"  );
-    ncl_precache_client_only("sprites/TBW5.spr",    "sprites/test_nextclient/TBW5.spr"  );
-    ncl_precache_client_only("sprites/TBW6.spr",    "sprites/test_nextclient/TBW6.spr"  );
-    ncl_precache_client_only("sprites/TBW7.spr",    "sprites/test_nextclient/TBW7.spr"  );
-    ncl_precache_client_only("sprites/TDW.spr",     "sprites/test_nextclient/TDW.spr"   );
-    ncl_precache_client_only("sprites/THUD.spr",    "sprites/test_nextclient/THUD.spr"  );
+    ncl_upload_file("sprites/TBW1.spr",    "sprites/test_nextclient/TBW1.spr"  );
+    ncl_upload_file("sprites/TBW2.spr",    "sprites/test_nextclient/TBW2.spr"  );
+    ncl_upload_file("sprites/TBW3.spr",    "sprites/test_nextclient/TBW3.spr"  );
+    ncl_upload_file("sprites/TBW4.spr",    "sprites/test_nextclient/TBW4.spr"  );
+    ncl_upload_file("sprites/TBW5.spr",    "sprites/test_nextclient/TBW5.spr"  );
+    ncl_upload_file("sprites/TBW6.spr",    "sprites/test_nextclient/TBW6.spr"  );
+    ncl_upload_file("sprites/TBW7.spr",    "sprites/test_nextclient/TBW7.spr"  );
+    ncl_upload_file("sprites/TDW.spr",     "sprites/test_nextclient/TDW.spr"   );
+    ncl_upload_file("sprites/THUD.spr",    "sprites/test_nextclient/THUD.spr"  );
 
-    ncl_precache_client_only("sprites/radar640.spr",        "sprites/test_nextclient/radar640.spr"          ); 
-    ncl_precache_client_only("sprites/radaropaque640.spr",  "sprites/test_nextclient/radaropaque640.spr"    );
+    ncl_upload_file("sprites/TDWradar640.spr",        "sprites/test_nextclient/TDWradar640.spr"          ); 
+    ncl_upload_file("sprites/TDWradaropaque640.spr",  "sprites/test_nextclient/TDWradaropaque640.spr"    );
 
     for (new WeaponIdType:weaponID = WEAPON_P228; weaponID <= WEAPON_P90; weaponID++) {
         if (weaponID == WEAPON_GLOCK) {
@@ -735,12 +735,12 @@ public test_ncl_precache_client_only() {
         new weaponName[MAX_NAME_LENGTH];
         rg_get_weapon_info(weaponID, WI_NAME, weaponName, charsmax(weaponName));
 
-        ncl_precache_client_only(fmt("sprites/%s.txt", weaponName), fmt("sprites/test_nextclient/%s.txt", weaponName));\
+        ncl_upload_file(fmt("sprites/%s.txt", weaponName), fmt("sprites/test_nextclient/%s.txt", weaponName));\
     }
 
-    ncl_precache_client_only("sprites/weapon_shieldgun.txt", "sprites/test_nextclient/weapon_shieldgun.txt");
+    ncl_upload_file("sprites/weapon_shieldgun.txt", "sprites/test_nextclient/weapon_shieldgun.txt");
 
-    ncl_precache_hudtxt("sprites/test_nextclient/hud.txt");
+    ncl_upload_hudtxt("sprites/test_nextclient/hud.txt");
 }
 
 /* <=======> */

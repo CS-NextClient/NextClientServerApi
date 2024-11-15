@@ -42,7 +42,7 @@ cell AMX_NATIVE_CALL ncl_precache_sound(AMX* amx, cell* params)
     return soundIndex;
 }
 
-cell AMX_NATIVE_CALL ncl_precache_client_only(AMX* amx, cell* params)
+cell AMX_NATIVE_CALL ncl_upload_file(AMX* amx, cell* params)
 {
     enum args_e
     {
@@ -54,7 +54,7 @@ cell AMX_NATIVE_CALL ncl_precache_client_only(AMX* amx, cell* params)
     std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, NULL);
     std::string nclFilepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, NULL);
 
-    int result = NAPI()->PrivatePrecache()->PrecacheClientOnly(filepath, nclFilepath);
+    int result = NAPI()->PrivatePrecache()->UploadFile(filepath, nclFilepath);
     if (result == 0)
         MF_LogError(amx, AMX_ERR_NATIVE, "Can't find file '%s' (is a replacement for '%s')", nclFilepath.c_str(), filepath.c_str());
 
@@ -63,9 +63,9 @@ cell AMX_NATIVE_CALL ncl_precache_client_only(AMX* amx, cell* params)
 }
 
 AMX_NATIVE_INFO nativeInfoPrivatePrecache[] = {
-        {"ncl_precache_model",       ncl_precache_model},
-        {"ncl_precache_sound",       ncl_precache_sound},
-        {"ncl_precache_client_only", ncl_precache_client_only},
+        {"ncl_precache_model",  ncl_precache_model},
+        {"ncl_precache_sound",  ncl_precache_sound},
+        {"ncl_upload_file",     ncl_upload_file},
 
         {nullptr,                    nullptr}
 };

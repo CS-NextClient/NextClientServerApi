@@ -31,7 +31,7 @@ int PrivatePrecache::PrecacheSound(const std::string& filepath, const std::strin
     return PRECACHE_SOUND(filepath.c_str());
 }
 
-bool PrivatePrecache::PrecacheClientOnly(const std::string& filepath, const std::string& nclFilepath)
+bool PrivatePrecache::UploadFile(const std::string& filepath, const std::string& nclFilepath)
 {
     return AppendResource(filepath, nclFilepath, false);
 }
