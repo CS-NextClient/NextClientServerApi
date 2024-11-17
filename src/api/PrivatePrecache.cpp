@@ -87,8 +87,8 @@ bool PrivatePrecache::AppendResource(const std::string& filepath, const std::str
     if (checksum == 0)
         return false;
 
-    char buffer[256];
-    sprintf(buffer, "%d:%s:%s:%x:%d", replace, filepath.c_str(), nclFilepath.c_str(), checksum, filesize);
+    char buffer[512];
+    sprintf_s(buffer, "%d:%s:%s:%x:%d", replace, filepath.c_str(), nclFilepath.c_str(), checksum, filesize);
 
     map_resource_list_[filepath] = buffer;
     std::remove((filepath_absolute + ".ztmp").c_str());
