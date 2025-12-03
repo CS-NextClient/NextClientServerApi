@@ -7,9 +7,9 @@ class ViewmodelFX : public IViewmodelFX,
                     public IEventServerActivated {
 	enum class VFX {
 		VMFX_RENDERMODE,
+		VMFX_RENDERFX,
 		VMFX_RENDERAMT,
 		VMFX_RENDERCOLOR,
-		VMFX_RENDERFX,
 		VMFX_SKIN,
 		VMFX_BODY,
 	};
