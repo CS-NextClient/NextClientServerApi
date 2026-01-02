@@ -7,4 +7,6 @@ void AddNatives_All()
     AddNatives_PrivatePrecache();
     AddNatives_ViewmodelFX();
     AddNatives_DeathNoticeWpnIcon();
+    AddNatives_HudSprite();
+    AddNatives_Miscellaneous();
 }

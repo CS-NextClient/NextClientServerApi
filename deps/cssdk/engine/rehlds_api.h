@@ -286,7 +286,7 @@ struct RehldsFuncs_t {
 	void (*SV_AddResource)(resourcetype_t type, const char *name, int size, unsigned char flags, int index);
 	int(*MSG_ReadShort)();
 	int(*MSG_ReadBuf)(int iSize, void *pbuf);
-	void(*MSG_WriteBuf)(sizebuf_t *sb, int iSize, void *buf);
+	void(*MSG_WriteBuf)(sizebuf_t *sb, int iSize, const void *buf);
 	void(*MSG_WriteByte)(sizebuf_t *sb, int c);
 	void(*MSG_WriteShort)(sizebuf_t *sb, int c);
 	void(*MSG_WriteString)(sizebuf_t *sb, const char *s);

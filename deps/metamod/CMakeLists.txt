@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.10)
 project(metamod_sdk)
 
-set(METAMOD_SDK_INCLUDE_PATHS
-	${CSSDK_INCLUDE_PATHS}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	PARENT_SCOPE)
+add_library(${PROJECT_NAME} INTERFACE)
+add_library(metamod_sdk::metamod_sdk ALIAS ${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} INTERFACE
+		${CMAKE_CURRENT_SOURCE_DIR}
+)

@@ -1,26 +1,18 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.10)
 project(cssdk)
 
-set(CSSDK_INCLUDE_PATHS
-	${CMAKE_CURRENT_SOURCE_DIR}/common
-	${CMAKE_CURRENT_SOURCE_DIR}/dlls
-	${CMAKE_CURRENT_SOURCE_DIR}/engine
-	${CMAKE_CURRENT_SOURCE_DIR}/pm_shared
-	${CMAKE_CURRENT_SOURCE_DIR}/public
+add_library(${PROJECT_NAME} INTERFACE)
+add_library(cssdk::cssdk ALIAS ${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} INTERFACE
+		${CMAKE_CURRENT_SOURCE_DIR}/common
+		${CMAKE_CURRENT_SOURCE_DIR}/dlls
+		${CMAKE_CURRENT_SOURCE_DIR}/engine
+		${CMAKE_CURRENT_SOURCE_DIR}/pm_shared
+		${CMAKE_CURRENT_SOURCE_DIR}/public
+		${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-set(CSSDK_INCLUDE_PATHS
-    ${CSSDK_INCLUDE_PATHS}
-	PARENT_SCOPE)
-
-set(CSSDK_RUNTIME_SOURCE_FILES
-	${CMAKE_CURRENT_SOURCE_DIR}/public/interface.cpp
-	PARENT_SCOPE)
-
-add_library(${PROJECT_NAME} STATIC
-	public/interface.cpp
-)
-
-target_include_directories(${PROJECT_NAME} PUBLIC
-	${CSSDK_INCLUDE_PATHS}
+target_sources(${PROJECT_NAME} INTERFACE
+		${CMAKE_CURRENT_SOURCE_DIR}/public/interface.cpp
 )

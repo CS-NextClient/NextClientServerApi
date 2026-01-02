@@ -724,8 +724,8 @@ public test_ncl_upload_file() {
     ncl_upload_file("sprites/TDW.spr",     "sprites/test_nextclient/TDW.spr"   );
     ncl_upload_file("sprites/THUD.spr",    "sprites/test_nextclient/THUD.spr"  );
 
-    ncl_upload_file("sprites/TDWradar640.spr",        "sprites/test_nextclient/TDWradar640.spr"          ); 
-    ncl_upload_file("sprites/TDWradaropaque640.spr",  "sprites/test_nextclient/TDWradaropaque640.spr"    );
+    ncl_upload_file("sprites/radar640.spr",        "sprites/test_nextclient/radar640.spr"          );
+    ncl_upload_file("sprites/radaropaque640.spr",  "sprites/test_nextclient/radaropaque640.spr"    );
 
     for (new WeaponIdType:weaponID = WEAPON_P228; weaponID <= WEAPON_P90; weaponID++) {
         if (weaponID == WEAPON_GLOCK) {

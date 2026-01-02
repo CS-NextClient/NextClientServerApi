@@ -1,102 +1,105 @@
-#include "main.h"
+#include <easylogging++.h>
 #include "amxxmodule.h"
-#include "asserts.h"
+#include "api_access.h"
+#include "AmxContextGuard.h"
 
-cell AMX_NATIVE_CALL ncl_viewmodelfx_begin(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_viewmodelfx_begin(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
         arg_index
     };
-    ASSERT_ARG_IS_PLAYER(arg_index);
 
-    NAPI()->ViewmodelFX()->Begin(params[arg_index]);
+    if (MF_IsPlayerBot(params[arg_index]))
+        return FALSE;
 
-    ASSERT_NO_NAPI_ERRORS();
+    if (!MF_IsPlayerValid(params[arg_index]))
+    {
+        LOG(ERROR) << "invalid player index " << params[arg_index];
+        return FALSE;
+    }
+
+    GetViewmodelFX().Begin(params[arg_index]);
     return TRUE;
 }
 
-cell AMX_NATIVE_CALL ncl_viewmodelfx_end(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_viewmodelfx_end(AMX* amx, cell* params)
 {
-    NAPI()->ViewmodelFX()->End();
-
-    ASSERT_NO_NAPI_ERRORS();
+    AmxContextGuard guard(amx);
+    GetViewmodelFX().End();
     return TRUE;
 }
 
-cell AMX_NATIVE_CALL ncl_write_rendermode(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_rendermode(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
         arg_rendermode
     };
 
-    NAPI()->ViewmodelFX()->WriteRenderMode(params[arg_rendermode]);
-
-    ASSERT_NO_NAPI_ERRORS();
+    GetViewmodelFX().WriteRenderMode(params[arg_rendermode]);
     return TRUE;
 }
 
-cell AMX_NATIVE_CALL ncl_write_renderamt(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_renderamt(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
         arg_renderamt
     };
 
-    NAPI()->ViewmodelFX()->WriteRenderAmt(params[arg_renderamt]);
-
-    ASSERT_NO_NAPI_ERRORS();
+    GetViewmodelFX().WriteRenderAmt(params[arg_renderamt]);
     return TRUE;
 }
 
-cell AMX_NATIVE_CALL ncl_write_renderfx(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_renderfx(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
         arg_renderfx
     };
 
-    NAPI()->ViewmodelFX()->WriteRenderFX(params[arg_renderfx]);
-
-    ASSERT_NO_NAPI_ERRORS();
+    GetViewmodelFX().WriteRenderFX(params[arg_renderfx]);
     return TRUE;
 }
 
-cell AMX_NATIVE_CALL ncl_write_renderskin(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_renderskin(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
         arg_skin
     };
 
-    NAPI()->ViewmodelFX()->WriteSkin(params[arg_skin]);
-
-    ASSERT_NO_NAPI_ERRORS();
+    GetViewmodelFX().WriteSkin(params[arg_skin]);
     return TRUE;
 }
 
-cell AMX_NATIVE_CALL ncl_write_renderbody(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_renderbody(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
         arg_body
     };
 
-    NAPI()->ViewmodelFX()->WriteBody(params[arg_body]);
-
-    ASSERT_NO_NAPI_ERRORS();
+    GetViewmodelFX().WriteBody(params[arg_body]);
     return TRUE;
 }
 
-cell AMX_NATIVE_CALL ncl_write_rendercolor(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_rendercolor(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
@@ -105,26 +108,23 @@ cell AMX_NATIVE_CALL ncl_write_rendercolor(AMX* amx, cell* params)
         arg_b
     };
 
-    NAPI()->ViewmodelFX()->WriteRenderColor(params[arg_r], params[arg_g], params[arg_b]);
-
-    ASSERT_NO_NAPI_ERRORS();
+    GetViewmodelFX().WriteRenderColor(params[arg_r], params[arg_g], params[arg_b]);
     return TRUE;
 }
 
-AMX_NATIVE_INFO nativeInfoViewmodelFX[] = {
-        {"ncl_viewmodelfx_begin", ncl_viewmodelfx_begin},
-        {"ncl_viewmodelfx_end",   ncl_viewmodelfx_end},
-        {"ncl_write_rendermode",  ncl_write_rendermode},
-        {"ncl_write_renderamt",   ncl_write_renderamt},
-        {"ncl_write_renderfx",    ncl_write_renderfx},
-        {"ncl_write_renderskin",  ncl_write_renderskin},
-        {"ncl_write_renderbody",  ncl_write_renderbody},
-        {"ncl_write_rendercolor", ncl_write_rendercolor},
-
-        {nullptr,                 nullptr}
+static AMX_NATIVE_INFO g_NativeInfo[] = {
+    { "ncl_viewmodelfx_begin", ncl_viewmodelfx_begin },
+    { "ncl_viewmodelfx_end", ncl_viewmodelfx_end },
+    { "ncl_write_rendermode", ncl_write_rendermode },
+    { "ncl_write_renderamt", ncl_write_renderamt },
+    { "ncl_write_renderfx", ncl_write_renderfx },
+    { "ncl_write_renderskin", ncl_write_renderskin },
+    { "ncl_write_renderbody", ncl_write_renderbody },
+    { "ncl_write_rendercolor", ncl_write_rendercolor },
+    { nullptr, nullptr }
 };
 
 void AddNatives_ViewmodelFX()
 {
-    MF_AddNatives(nativeInfoViewmodelFX);
+    MF_AddNatives(g_NativeInfo);
 }

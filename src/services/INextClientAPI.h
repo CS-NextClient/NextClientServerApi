@@ -1,0 +1,21 @@
+#pragma once
+
+#define BIT(n)  (1<<(n))
+
+enum class NextClientUsing
+{
+    NOT_USING,
+    DECLARE_USING,
+    USING_VERIFIED
+};
+
+enum NextClientFeatures
+{
+    FEATURE_CVARS_SANDBOX = BIT(0),
+    FEATURE_VIEWMODEL_FX = BIT(1),
+    FEATURE_PRIVATE_PRECACHE = BIT(2),
+    FEATURE_VERIFICATION = BIT(3),
+    FEATURE_HUD_SPRITE = BIT(4),
+    FEATURE_HUD_SPRITE_RENDERMODE = BIT(5),
+    FEATURE_DEATHMSG_WPN_ICON = BIT(6)
+};

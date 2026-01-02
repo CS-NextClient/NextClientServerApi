@@ -150,7 +150,7 @@ CSysModule *Sys_LoadModule(const char *pModuleName)
 
 	if (!hDLL)
 	{
-		char str[512];
+		char str[1500];
 
 #if defined(_WIN32)
 		_snprintf_s(str, sizeof(str), "%s.dll", pModuleName);

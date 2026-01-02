@@ -1,9 +1,11 @@
-#include "main.h"
+#include <easylogging++.h>
 #include "amxxmodule.h"
-#include "asserts.h"
+#include "api_access.h"
+#include "AmxContextGuard.h"
 
-cell AMX_NATIVE_CALL ncl_precache_model(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_precache_model(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
@@ -11,19 +13,22 @@ cell AMX_NATIVE_CALL ncl_precache_model(AMX* amx, cell* params)
         arg_nclFilepath
     };
 
-    std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, NULL);
-    std::string nclFilepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, NULL);
+    std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, nullptr);
+    std::string ncl_filepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, nullptr);
 
-    int modelIndex = NAPI()->PrivatePrecache()->PrecacheModel(filepath, nclFilepath);
-    if (modelIndex == 0)
-        MF_LogError(amx, AMX_ERR_NATIVE, "Can't find file '%s' (is a replacement for '%s')", nclFilepath.c_str(), filepath.c_str());
+    int model_index = GetPrivatePrecache().PrecacheModel(filepath, ncl_filepath);
+    if (model_index == 0)
+    {
+        LOG(ERROR) << "Can't find file '" << ncl_filepath << "' (is a replacement for '" << filepath << "')";
+        return FALSE;
+    }
 
-    ASSERT_NO_NAPI_ERRORS();
-    return modelIndex;
+    return model_index;
 }
 
-cell AMX_NATIVE_CALL ncl_precache_sound(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_precache_sound(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
@@ -31,19 +36,22 @@ cell AMX_NATIVE_CALL ncl_precache_sound(AMX* amx, cell* params)
         arg_nclFilepath
     };
 
-    std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, NULL);
-    std::string nclFilepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, NULL);
+    std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, nullptr);
+    std::string ncl_filepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, nullptr);
 
-    int soundIndex = NAPI()->PrivatePrecache()->PrecacheSound(filepath, nclFilepath);
-    if (soundIndex == 0)
-        MF_LogError(amx, AMX_ERR_NATIVE, "Can't find file '%s' (is a replacement for '%s')", nclFilepath.c_str(), filepath.c_str());
+    int sound_index = GetPrivatePrecache().PrecacheSound(filepath, ncl_filepath);
+    if (sound_index == 0)
+    {
+        LOG(ERROR) << "Can't find file '" << ncl_filepath << "' (is a replacement for '" << filepath << "')";
+        return FALSE;
+    }
 
-    ASSERT_NO_NAPI_ERRORS();
-    return soundIndex;
+    return sound_index;
 }
 
-cell AMX_NATIVE_CALL ncl_upload_file(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_upload_file(AMX* amx, cell* params)
 {
+    AmxContextGuard guard(amx);
     enum args_e
     {
         arg_count,
@@ -51,23 +59,24 @@ cell AMX_NATIVE_CALL ncl_upload_file(AMX* amx, cell* params)
         arg_nclFilepath
     };
 
-    std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, NULL);
-    std::string nclFilepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, NULL);
+    std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, nullptr);
+    std::string ncl_filepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, nullptr);
 
-    int result = NAPI()->PrivatePrecache()->UploadFile(filepath, nclFilepath);
+    int result = GetPrivatePrecache().UploadFile(filepath, ncl_filepath);
     if (result == 0)
-        MF_LogError(amx, AMX_ERR_NATIVE, "Can't find file '%s' (is a replacement for '%s')", nclFilepath.c_str(), filepath.c_str());
+    {
+        LOG(ERROR) << "Can't find file '" << ncl_filepath << "' (is a replacement for '" << filepath << "')";
+        return FALSE;
+    }
 
-    ASSERT_NO_NAPI_ERRORS();
     return TRUE;
 }
 
-AMX_NATIVE_INFO nativeInfoPrivatePrecache[] = {
-        {"ncl_precache_model",  ncl_precache_model},
-        {"ncl_precache_sound",  ncl_precache_sound},
-        {"ncl_upload_file",     ncl_upload_file},
-
-        {nullptr,                    nullptr}
+static AMX_NATIVE_INFO nativeInfoPrivatePrecache[] = {
+    { "ncl_precache_model", ncl_precache_model },
+    { "ncl_precache_sound", ncl_precache_sound },
+    { "ncl_upload_file", ncl_upload_file },
+    { nullptr, nullptr }
 };
 
 void AddNatives_PrivatePrecache()
