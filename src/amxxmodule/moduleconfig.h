@@ -26,7 +26,7 @@
  *   to add multiple entries.
  */
 #define MODULE_NAME "Next Client API"
-#define MODULE_VERSION "1.5.0"
+#define MODULE_VERSION "1.5.1"
 #define MODULE_AUTHOR "Next21 Team"
 #define MODULE_URL "https://github.com/CS-NextClient/NextClientServerApi"
 #define MODULE_LOGTAG "nclapi"
