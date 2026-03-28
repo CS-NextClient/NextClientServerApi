@@ -120,60 +120,69 @@ void NclmProtocol::DeclareVersionHandler(ClientId client)
 
 void NclmProtocol::ClientMessageHandler(IRehldsHook_HandleNetCommand* hookchain, IGameClient* apiClient, int8 opcode)
 {
-    if (opcode == clc_ncl_message)
+    if (opcode != clc_ncl_message)
     {
-        ClientId client = apiClient->GetId() + 1;
-        int32_t header = MSG_ReadLong();
+        hookchain->callNext(apiClient, opcode);
+        return;
+    }
 
-        if (header != NCLM_HEADER && header != NCLM_HEADER_OLD)
+    ClientId client = apiClient->GetId() + 1;
+
+    int read_count = *g_RehldsFuncs->GetMsgReadCount();
+    int32_t header = MSG_ReadLong();
+
+    if (header != NCLM_HEADER && header != NCLM_HEADER_OLD)
+    {
+        // rollback read count
+        if (*g_RehldsFuncs->GetMsgBadRead() == TRUE)
         {
-            // rollback read count
-            *g_RehldsFuncs->GetMsgReadCount() -= 4;
+            *g_RehldsFuncs->GetMsgBadRead() = FALSE;
+        }
+        *g_RehldsFuncs->GetMsgReadCount() = read_count;
 
-            hookchain->callNext(apiClient, opcode);
+        hookchain->callNext(apiClient, opcode);
+        return;
+    }
+
+    if (header == NCLM_HEADER)
+    {
+        int32_t nclm_message_size = MSG_ReadLong();
+        NCLM_C2S nclm_opcode = (NCLM_C2S)MSG_ReadByte();
+
+        if (MSG_IsBadRead())
+        {
+            LOG(ERROR) << "badread opcode on " << MF_GetPlayerName(client);
             return;
         }
 
-        if (header == NCLM_HEADER)
+        // the actual message size includes the message size and the opcode,
+        // we must subtract them because we read them earlier
+        int32_t full_message_size = *g_RehldsFuncs->GetMsgReadCount()
+            + nclm_message_size
+            - sizeof(int32_t)
+            - sizeof(uint8_t);
+
+        NclMessageHandler(client, nclm_opcode);
+
+        int32_t* read_count_ptr = g_RehldsFuncs->GetMsgReadCount();
+        if (*read_count_ptr < full_message_size)
         {
-            int32_t nclm_message_size = MSG_ReadLong();
-            NCLM_C2S nclm_opcode = (NCLM_C2S)MSG_ReadByte();
-
-            if (MSG_IsBadRead())
-            {
-                LOG(ERROR) << "badread opcode on " << MF_GetPlayerName(client);
-                return;
-            }
-
-            // the actual message size includes the message size and the opcode,
-            // we must subtract them because we read them earlier
-            int32_t full_message_size = *g_RehldsFuncs->GetMsgReadCount() + nclm_message_size - 4 - 1;
-
-            NclMessageHandler(client, nclm_opcode);
-
-            int32_t* read_count = g_RehldsFuncs->GetMsgReadCount();
-            if (*read_count < full_message_size)
-            {
-                *read_count = full_message_size;
-            }
-        }
-        else if (header == NCLM_HEADER_OLD)
-        {
-            NCLM_C2S nclm_opcode = (NCLM_C2S)MSG_ReadByte();
-
-            if (MSG_IsBadRead())
-            {
-                LOG(ERROR) << "badread opcode on " << MF_GetPlayerName(client);
-                return;
-            }
-
-            NclMessageHandler(client, nclm_opcode);
+            *read_count_ptr = full_message_size;
         }
     }
+    else if (header == NCLM_HEADER_OLD)
+    {
+        NCLM_C2S nclm_opcode = (NCLM_C2S)MSG_ReadByte();
 
-    hookchain->callNext(apiClient, opcode);
+        if (MSG_IsBadRead())
+        {
+            LOG(ERROR) << "badread opcode on " << MF_GetPlayerName(client);
+            return;
+        }
+
+        NclMessageHandler(client, nclm_opcode);
+    }
 }
-
 
 void NclmProtocol::ServerActivatedHandler(ServerActivatedEvent event)
 {
