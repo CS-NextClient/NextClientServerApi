@@ -9,4 +9,5 @@ void AddNatives_All()
     AddNatives_DeathNoticeWpnIcon();
     AddNatives_HudSprite();
     AddNatives_Miscellaneous();
+    AddNatives_Hwid();
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include "NextClientVersion.h"
 
 struct PlayerData
@@ -8,4 +9,6 @@ struct PlayerData
     bool is_using_nextclient{};
     bool is_api_ready{};
     bool is_verified{};
+
+    std::string hwid{};
 };

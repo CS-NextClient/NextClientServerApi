@@ -8,3 +8,9 @@ struct ClientAuthEvent
     std::string clientVersion;
     bool isVerified;
 };
+
+struct HwidReceivedEvent
+{
+    ClientId    client;
+    std::string hwid;   // 64-char hex SHA-256
+};

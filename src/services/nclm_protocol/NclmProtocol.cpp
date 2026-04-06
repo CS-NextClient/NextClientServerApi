@@ -30,6 +30,11 @@ sigslot::signal<ClientAuthEvent>& NclmProtocol::on_client_auth()
     return on_client_auth_;
 }
 
+sigslot::signal<HwidReceivedEvent>& NclmProtocol::on_hwid_received()
+{
+    return on_hwid_received_;
+}
+
 void NclmProtocol::NclMessageHandler(ClientId client, NCLM_C2S opcode)
 {
     switch (opcode)
@@ -44,6 +49,10 @@ void NclmProtocol::NclMessageHandler(ClientId client, NCLM_C2S opcode)
 
     case NCLM_C2S::DECLARE_VERSION_REQUEST:
         DeclareVersionHandler(client);
+        break;
+
+    case NCLM_C2S::HARDWARE_ID:
+        HardwareIdHandler(client);
         break;
     }
 }
@@ -117,6 +126,44 @@ void NclmProtocol::DeclareVersionHandler(ClientId client)
     on_client_auth_(ClientAuthEvent{client, client_version, false});
 }
 
+static bool IsValidHwidFormat(const std::string& hwid)
+{
+    if (hwid.size() != NCLM_HWID_SIZE)
+        return false;
+
+    for (char c : hwid)
+    {
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+            return false;
+    }
+    return true;
+}
+
+void NclmProtocol::HardwareIdHandler(ClientId client)
+{
+    std::string hwid = MSG_ReadString();
+
+    if (MSG_IsBadRead())
+    {
+        LOG(ERROR) << "hwid: badread on " << MF_GetPlayerName(client);
+        return;
+    }
+
+    if (!IsValidHwidFormat(hwid))
+    {
+        LOG(WARNING) << "hwid: invalid format from " << MF_GetPlayerName(client)
+                     << " (len=" << hwid.size() << ")";
+        return;
+    }
+
+    for (char& c : hwid)
+        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+
+    LOG(INFO) << "hwid: received from " << MF_GetPlayerName(client)
+              << " [" << hwid << "]";
+
+    on_hwid_received_(HwidReceivedEvent{client, hwid});
+}
 
 void NclmProtocol::ClientMessageHandler(IRehldsHook_HandleNetCommand* hookchain, IGameClient* apiClient, int8 opcode)
 {
