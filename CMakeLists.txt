@@ -55,6 +55,7 @@ add_library(${PROJECT_NAME} SHARED
         src/natives/nextclient.cpp
         src/natives/natives.h
         src/natives/natives.cpp
+        src/natives/hwid.cpp
 
         src/services/game_events/GameEventsManager.h
         src/services/game_events/GameEventsManager.cpp
