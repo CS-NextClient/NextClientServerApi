@@ -9,6 +9,8 @@ constexpr size_t RSA_KEY_LENGTH =			256;
 constexpr size_t NCLM_VERIF_PAYLOAD_SIZE =	196;
 constexpr size_t NCLM_VERIF_ENCRYPTED_PAYLOAD_SIZE = ((NCLM_VERIF_PAYLOAD_SIZE / RSA_KEY_LENGTH) + 1) * RSA_KEY_LENGTH;
 
+constexpr size_t NCLM_HWID_SIZE = 64;
+
 enum class NCLM_C2S
 {
 	/*
@@ -28,7 +30,20 @@ enum class NCLM_C2S
 	 * Used to tell the server the version of NextClient in use
 	 * when the private key in the client is not configured.
 	 */
-	DECLARE_VERSION_REQUEST
+	DECLARE_VERSION_REQUEST,
+
+	/*
+	 * HWID identification.
+	 * Only sent by verified clients (post RSA handshake).
+	 *
+	 * Payload:
+	 *   byte      This opcode (0x04)
+	 *   string    64-char lowercase hex SHA-256 of hardware identifiers
+	 *
+	 * Non-NextClient or older clients will never send this opcode.
+	 * Server must NOT kick clients that omit it — store empty string instead.
+	 */
+	HARDWARE_ID                         // = 0x04 (sequential)
 };
 
 enum class NCLM_S2C

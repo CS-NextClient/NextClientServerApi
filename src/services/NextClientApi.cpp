@@ -11,6 +11,7 @@ NextClientApi::NextClientApi(GameEventsManager& game_events_manager, NclmProtoco
     game_events_manager_.on_client_connected().connect(&NextClientApi::ClientConnectedHandler, this);
     game_events_manager_.on_client_connecting().connect(&NextClientApi::ClientConnectingHandler, this);
     nclm_protocol_.on_client_auth().connect(&NextClientApi::ClientAuthHandler, this);
+    nclm_protocol_.on_hwid_received().connect(&NextClientApi::HwidReceivedHandler, this); 
 }
 
 bool NextClientApi::IsClientReady(ClientId client)
@@ -96,6 +97,20 @@ int NextClientApi::GetSupportedFeatures(ClientId client)
     return features;
 }
 
+bool NextClientApi::GetClientHwid(ClientId client, std::string& hwid_out)
+{
+    auto it = players_.find(client);
+    if (it == players_.end())
+        return false;
+
+    const std::string& hwid = it->second.hwid;
+    if (hwid.empty())
+        return false;
+
+    hwid_out = hwid;
+    return true;
+}
+
 bool NextClientApi::ParseVersion(const std::string& in, NextClientVersion& out)
 {
     if (in.size() > 10)
@@ -116,7 +131,8 @@ bool NextClientApi::ParseVersion(const std::string& in, NextClientVersion& out)
 
 void NextClientApi::ServerActivatedHandler(ServerActivatedEvent event)
 {
-    forward_api_ready_ = MF_RegisterForward("ncl_client_api_ready", ET_IGNORE, FP_CELL, FP_DONE);
+    forward_api_ready_      = MF_RegisterForward("ncl_client_api_ready",  ET_IGNORE, FP_CELL, FP_DONE);
+    forward_hwid_received_  = MF_RegisterForward("ncl_hwid_received",     ET_IGNORE, FP_CELL, FP_STRING, FP_DONE);
 }
 
 void NextClientApi::ClientAuthHandler(ClientAuthEvent event)
@@ -138,12 +154,41 @@ void NextClientApi::ClientAuthHandler(ClientAuthEvent event)
 
     if (event.isVerified)
     {
-        LOG(INFO) << "Verified user " << name << " has joined the game (" <<  event.clientVersion << ")!";
+        LOG(INFO) << "Verified user " << name << " has joined the game (" << event.clientVersion << ")!";
     }
     else
     {
-        LOG(INFO) << "NextClient compatible user " << name << " has joined the game (" <<  event.clientVersion << ")!";
+        LOG(INFO) << "NextClient compatible user " << name << " has joined the game (" << event.clientVersion << ")!";
     }
+}
+
+void NextClientApi::HwidReceivedHandler(HwidReceivedEvent event)
+{
+    auto it = players_.find(event.client);
+    if (it == players_.end())
+        return;
+
+    PlayerData& player = it->second;
+
+    if (!player.is_verified)
+    {
+        LOG(WARNING) << "hwid: received from non-verified client "
+                     << MF_GetPlayerName(event.client) << " — ignored";
+        return;
+    }
+
+    if (!player.hwid.empty())
+    {
+        LOG(WARNING) << "hwid: duplicate from " << MF_GetPlayerName(event.client) << " — ignored";
+        return;
+    }
+
+    player.hwid = event.hwid;
+
+    LOG(INFO) << "hwid: stored for " << MF_GetPlayerName(event.client)
+              << " [" << player.hwid << "]";
+
+    MF_ExecuteForward(forward_hwid_received_, event.client, player.hwid.c_str());
 }
 
 void NextClientApi::PlayerPostThinkHandler(ClientId client)
@@ -167,6 +212,7 @@ void NextClientApi::ClientConnectedHandler(ClientId client)
     data.is_api_ready = false;
     data.is_verified = false;
     data.client_version = NextClientVersion{};
+    data.hwid = {};
 
     edict_t* entity = INDEXENT(client);
     if (!entity)

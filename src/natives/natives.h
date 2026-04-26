@@ -7,5 +7,6 @@ void AddNatives_ViewmodelFX();
 void AddNatives_DeathNoticeWpnIcon();
 void AddNatives_HudSprite();
 void AddNatives_Miscellaneous();
+void AddNatives_Hwid();
 
 void AddNatives_All();
