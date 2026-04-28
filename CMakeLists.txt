@@ -10,8 +10,8 @@ set(CMAKE_CXX_STANDARD 17)
 if (UNIX)
     set(NAPI_TARGET_PROPS
             SUFFIX "_i386.so"
-            COMPILE_FLAGS "-m32"
-            LINK_FLAGS "-m32 -static-libstdc++ -static-libgcc -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/version.version"
+            COMPILE_FLAGS "-m32 -Wa,--noexecstack"
+            LINK_FLAGS "-m32 -static-libstdc++ -static-libgcc -Wl,-z,noexecstack -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/version.version"
             LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/version.version
     )
 
