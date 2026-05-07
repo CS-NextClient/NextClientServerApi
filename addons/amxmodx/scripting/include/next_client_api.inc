@@ -55,7 +55,13 @@ enum eSandboxCvar
     SC_cl_fog_r,
     SC_cl_fog_g,
     SC_cl_fog_b,
-    SC_viewmodel_fov
+    SC_viewmodel_fov,
+    // since Next Client v2.5.0
+    SC_camera_movement_scale,
+    SC_camera_movement_interp,
+    SC_cl_bob_camera,
+    SC_viewmodel_lag_style,
+    SC_hud_deathnotice_max
 }
 
 enum eNclVersion
