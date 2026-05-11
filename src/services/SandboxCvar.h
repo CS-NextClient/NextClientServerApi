@@ -43,5 +43,11 @@ enum class SandboxCvar
     cl_fog_r,
     cl_fog_g,
     cl_fog_b,
-    viewmodel_fov
+    viewmodel_fov,
+    // since Next Client v2.5.0
+    camera_movement_scale,
+    camera_movement_interp,
+    cl_bob_camera,
+    viewmodel_lag_style,
+    hud_deathnotice_max
 };
