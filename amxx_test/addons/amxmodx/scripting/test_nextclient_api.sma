@@ -240,7 +240,8 @@ new const CVAR_STRING[eSandboxCvar][] = {
     "cl_min_ct",                "cl_corpsestay",        "r_decals",
     "cl_yawspeed",              "cl_pitchspeed",        "cl_fog_density",
     "cl_fog_r",                 "cl_fog_g",             "cl_fog_b",
-    "viewmodel_fov"
+    "viewmodel_fov",            "camera_movement_scale","camera_movement_interp",
+    "cl_bob_camera",            "viewmodel_lag_style",  "hud_deathnotice_max"
 };
 
 new const CVAR_VALUES[eSandboxCvar][] = {
@@ -256,7 +257,8 @@ new const CVAR_VALUES[eSandboxCvar][] = {
     "2",        "17",       "0",
     "110",      "120",      "0",
     "177",      "177",      "177",
-    "80"
+    "80",       "10",       "1",
+    "1.5",      "2",        "15"
 };
 
 public cmd_ncl_test_sandbox_cvars(id) {
