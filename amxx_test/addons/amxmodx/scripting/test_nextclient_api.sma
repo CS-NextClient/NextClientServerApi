@@ -48,6 +48,7 @@ public plugin_init() {
     register_concmd("ncl_test_viewmodelfx_render",   "cmd_ncl_test_viewmodelfx_render",  ADMIN_ALL);
     register_concmd("ncl_restore_viewmodelfx",       "cmd_ncl_restore_viewmodelfx",      ADMIN_ALL);
     register_concmd("ncl_setfov",                    "cmd_ncl_setfov",                   ADMIN_ALL);
+    register_concmd("ncl_invert_mouse",              "cmd_ncl_invert_mouse",             ADMIN_ALL);
     register_concmd("ncl_hudsprite_set",             "cmd_ncl_hudsprite_set",            ADMIN_ALL); // ncl_send_hud_sprite(), ncl_send_hud_sprite_full_screen()
     register_concmd("ncl_hudsprite_clear",           "cmd_ncl_hudsprite_clear",          ADMIN_ALL); // ncl_clear_hud_sprite()
 
@@ -448,6 +449,36 @@ public cmd_ncl_restore_viewmodelfx(id) {
     ncl_write_renderskin(0);
     ncl_write_renderbody(0);
     ncl_viewmodelfx_end();
+
+    return PLUGIN_HANDLED;
+}
+
+/* <=======> */
+
+public cmd_ncl_invert_mouse(id) {
+    new bool:invert_pitch;
+    new bool:invert_yaw;
+    
+    if (id == 0) {
+        id = find_player_ex(FindPlayer_MatchUserId, read_argv_int(1));
+
+        if (id == 0) {
+            log_amx("Player with userid #%i not found.", read_argv_int(1));
+            return PLUGIN_HANDLED;
+        }
+
+        invert_pitch = read_argv_int(2) != 0;
+        invert_yaw = read_argv_int(3) != 0;
+    }
+    else {
+        invert_pitch = read_argv_int(1) != 0;
+        invert_yaw = read_argv_int(2) != 0;
+    }
+
+    log_to_file(LOG_FILE, "NATIVE <ncl_invert_mouse> testing called for player: %n", id);
+    log_to_file(LOG_FILE, "* You should manually check that mouse pitch is %s and yaw is %s", invert_pitch ? "inverted" : "normal", invert_yaw ? "inverted" : "normal");
+
+    ncl_invert_mouse(id, invert_pitch, invert_yaw);
 
     return PLUGIN_HANDLED;
 }

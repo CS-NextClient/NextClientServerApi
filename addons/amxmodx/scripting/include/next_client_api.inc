@@ -289,6 +289,18 @@ native ncl_viewmodelfx_end();
  */
 native ncl_setfov(id, fov, Float:time);
 
+
+/**
+ * Inverts mouse axes (pitch and/or yaw) for the specified client.
+ *
+ * @param id            Client index
+ * @param invert_pitch  true to invert pitch (look up/down), false to restore normal pitch
+ * @param invert_yaw    true to invert yaw (look left/right), false to restore normal yaw
+ *
+ * @noreturn
+ */
+native ncl_invert_mouse(id, bool:invert_pitch, bool:invert_yaw);
+
 /**
  * Separate precaching of the model for regular cs 1.6 client and NextClient.
  * For NextClient:
