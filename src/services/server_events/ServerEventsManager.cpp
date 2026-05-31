@@ -31,8 +31,33 @@ ServerEventsManager::ServerEventsManager()
     rehlds_api::HookChains()->SvFrame()->RegisterHook(SV_FrameHandler);
 }
 
+ServerEventsManager::ServerEventsManager(ServerEventsManager&& other) noexcept :
+    client_connecting_(std::move(other.client_connecting_)),
+    client_putinserver_(std::move(other.client_putinserver_)),
+    client_first_frame_(std::move(other.client_first_frame_)),
+    frame_(std::move(other.frame_)),
+    player_think_post_(std::move(other.player_think_post_)),
+    client_disconnected_(std::move(other.client_disconnected_)),
+    client_drop_connection_(std::move(other.client_drop_connection_)),
+    message_begin_post_(std::move(other.message_begin_post_)),
+    message_end_post_(std::move(other.message_end_post_)),
+    send_server_info_(std::move(other.send_server_info_)),
+    server_activated_(std::move(other.server_activated_)),
+    amxx_plugins_loaded_(std::move(other.amxx_plugins_loaded_)),
+    add_to_full_pack_(std::move(other.add_to_full_pack_)),
+    players_(std::move(other.players_))
+{
+    other.moved_ = true;
+    instance_ = this;
+}
+
 ServerEventsManager::~ServerEventsManager()
 {
+    if (moved_)
+    {
+        return;
+    }
+
     rehlds_api::HookChains()->SvDropClient()->UnregisterHook(SV_DropClientHandler);
     rehlds_api::HookChains()->SvSendServerInfo()->UnregisterHook(SV_SendServerInfoHandler);
     rehlds_api::HookChains()->SvFrame()->UnregisterHook(SV_FrameHandler);

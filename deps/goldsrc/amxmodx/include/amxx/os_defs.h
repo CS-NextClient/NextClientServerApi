@@ -30,6 +30,13 @@
 #ifndef _WIN32
 #include <climits>
 constexpr auto MAX_PATH = PATH_MAX;
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
 #endif
 
 #undef MSVC_COMPILER

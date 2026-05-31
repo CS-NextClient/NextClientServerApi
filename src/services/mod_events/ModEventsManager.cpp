@@ -14,8 +14,22 @@ ModEventsManager::ModEventsManager()
     regamedll_api::HookChains()->PlayerAddPlayerItem()->RegisterHook(mod_events::AddPlayerItemHook);
     regamedll_api::HookChains()->PlayerRemovePlayerItem()->RegisterHook(mod_events::RemovePlayerItemHook);
 }
+
+ModEventsManager::ModEventsManager(ModEventsManager&& other) noexcept :
+    add_player_item_(std::move(other.add_player_item_)),
+    remove_player_item_(std::move(other.remove_player_item_))
+{
+    other.moved_ = true;
+    instance_ = this;
+}
+
 ModEventsManager::~ModEventsManager()
 {
+    if (moved_)
+    {
+        return;
+    }
+
     regamedll_api::HookChains()->PlayerAddPlayerItem()->UnregisterHook(mod_events::AddPlayerItemHook);
     regamedll_api::HookChains()->PlayerRemovePlayerItem()->UnregisterHook(mod_events::RemovePlayerItemHook);
 

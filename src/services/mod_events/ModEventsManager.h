@@ -13,9 +13,11 @@ class ModEventsManager
     sigslot::signal<RemovePlayerItemEvent> remove_player_item_;
 
     static ModEventsManager* instance_;
+    bool moved_ = false;
 
 public:
     explicit ModEventsManager();
+    ModEventsManager(ModEventsManager&& other) noexcept;
     ~ModEventsManager();
 
     sigslot::signal<AddPlayerItemEvent>& on_add_player_item() noexcept;

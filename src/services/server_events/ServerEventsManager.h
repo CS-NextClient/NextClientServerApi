@@ -15,6 +15,8 @@ public:
         bool need_first_frame_trigger{};
     };
 
+    bool moved_ = false;
+
 private:
     sigslot::signal<ClientConnectingEvent> client_connecting_;
     sigslot::signal<ClientId> client_putinserver_;
@@ -38,6 +40,7 @@ private:
 
 public:
     explicit ServerEventsManager();
+    ServerEventsManager(ServerEventsManager&& other) noexcept;
     ~ServerEventsManager();
 
     sigslot::signal<ClientConnectingEvent>& on_client_connecting() noexcept;
