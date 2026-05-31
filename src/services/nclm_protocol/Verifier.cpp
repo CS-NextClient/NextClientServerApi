@@ -1,15 +1,19 @@
 #include "Verifier.h"
+
 #include <easylogging++.h>
+#include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
+
+#include <amxx/api.h>
+
 #include "NclmProtocol.h"
 
 #undef read
 
 Verifier::Verifier()
 {
-    dirpath_public_keys_ =
-        MF_BuildPathname("%s/nextclient_api/pkeys/", MF_GetLocalInfo("amxx_datadir", "addons/amxmodx/data"));
+    dirpath_public_keys_ = amxx::BuildPathName("%s/nextclient_api/pkeys/", amxx::GetLocalInfo("amxx_datadir", "addons/amxmodx/data"));
 
     ReloadPublicKeys();
 }
@@ -19,9 +23,13 @@ Verifier::~Verifier()
     FreeAllKeys();
 }
 
-bool Verifier::TryCreateVerificationPayload(ClientId client, const std::string& rsa_key_version, VerificationPayload& verification_payload_out)
+bool Verifier::TryCreateVerificationPayload(
+    ClientId client,
+    const std::string& rsa_key_version,
+    VerificationPayload& verification_payload_out
+)
 {
-    const char* client_name = MF_GetPlayerName(client);
+    const char* client_name = amxx::GetPlayerName(client);
 
     auto it = cached_pkeys_.find(rsa_key_version);
     if (it == cached_pkeys_.end())
@@ -68,12 +76,19 @@ bool Verifier::TryCreateVerificationPayload(ClientId client, const std::string& 
 
     if (out_len != NCLM_VERIF_ENCRYPTED_PAYLOAD_SIZE)
     {
-        LOG(DEBUG) << "'" << rsa_key_version << "' key length does not match (" << out_len << ", but need " << NCLM_VERIF_ENCRYPTED_PAYLOAD_SIZE << ") on " << client_name;
+        LOG(DEBUG) << "'" << rsa_key_version << "' key length does not match (" << out_len << ", but need "
+                   << NCLM_VERIF_ENCRYPTED_PAYLOAD_SIZE << ") on " << client_name;
         EVP_PKEY_CTX_free(ctx);
         return false;
     }
 
-    res = EVP_PKEY_encrypt(ctx, verification_payload_out.encrypted_payload.data(), &out_len, verification_payload_out.payload.data(), verification_payload_out.payload.size());
+    res = EVP_PKEY_encrypt(
+        ctx,
+        verification_payload_out.encrypted_payload.data(),
+        &out_len,
+        verification_payload_out.payload.data(),
+        verification_payload_out.payload.size()
+    );
     if (res <= 0)
     {
         LOG(ERROR) << "Cannot perform encrypt operation 2 (code " << res << ")" << " on " << client_name;
@@ -85,11 +100,16 @@ bool Verifier::TryCreateVerificationPayload(ClientId client, const std::string& 
     return true;
 }
 
-bool Verifier::ValidateReceivedPayload(ClientId client, const std::vector<uint8_t>& received_payload, const VerificationPayload& verification_payload)
+bool Verifier::ValidateReceivedPayload(
+    ClientId client,
+    const std::vector<uint8_t>& received_payload,
+    const VerificationPayload& verification_payload
+)
 {
-    const char* name = MF_GetPlayerName(client);
+    const char* name = amxx::GetPlayerName(client);
 
-    if (received_payload != verification_payload.payload)
+    if (received_payload.size() != verification_payload.payload.size() ||
+        CRYPTO_memcmp(received_payload.data(), verification_payload.payload.data(), received_payload.size()) != 0)
     {
         LOG(ERROR) << "Decrypted payload body mismatch (" << verification_payload.preferred_RSA_key_version << ") on " << name;
         return false;

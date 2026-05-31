@@ -1,9 +1,11 @@
 #include <easylogging++.h>
-#include "amxxmodule.h"
+
+#include <amxx/api.h>
+
 #include "api_access.h"
 #include "AmxContextGuard.h"
 
-static cell AMX_NATIVE_CALL ncl_is_client_api_ready(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_is_client_api_ready(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -12,10 +14,12 @@ static cell AMX_NATIVE_CALL ncl_is_client_api_ready(AMX* amx, cell* params)
         arg_index
     };
 
-    if (MF_IsPlayerBot(params[arg_index]))
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
         return FALSE;
+    }
 
-    if (!MF_IsPlayerValid(params[arg_index]))
+    if (!amxx::IsPlayerValid(params[arg_index]))
     {
         LOG(ERROR) << "invalid player index " << params[arg_index];
         return FALSE;
@@ -25,7 +29,7 @@ static cell AMX_NATIVE_CALL ncl_is_client_api_ready(AMX* amx, cell* params)
     return result;
 }
 
-static cell AMX_NATIVE_CALL ncl_is_next_client(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_is_next_client(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -34,10 +38,12 @@ static cell AMX_NATIVE_CALL ncl_is_next_client(AMX* amx, cell* params)
         arg_index
     };
 
-    if (MF_IsPlayerBot(params[arg_index]))
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
         return FALSE;
+    }
 
-    if (!MF_IsPlayerValid(params[arg_index]))
+    if (!amxx::IsPlayerValid(params[arg_index]))
     {
         LOG(ERROR) << "invalid player index " << params[arg_index];
         return FALSE;
@@ -47,7 +53,7 @@ static cell AMX_NATIVE_CALL ncl_is_next_client(AMX* amx, cell* params)
     return result;
 }
 
-static cell AMX_NATIVE_CALL ncl_is_using_nextclient(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_is_using_nextclient(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -56,10 +62,12 @@ static cell AMX_NATIVE_CALL ncl_is_using_nextclient(AMX* amx, cell* params)
         arg_index
     };
 
-    if (MF_IsPlayerBot(params[arg_index]))
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
         return FALSE;
+    }
 
-    if (!MF_IsPlayerValid(params[arg_index]))
+    if (!amxx::IsPlayerValid(params[arg_index]))
     {
         LOG(ERROR) << "invalid player index " << params[arg_index];
         return FALSE;
@@ -69,7 +77,7 @@ static cell AMX_NATIVE_CALL ncl_is_using_nextclient(AMX* amx, cell* params)
     return result;
 }
 
-static cell AMX_NATIVE_CALL ncl_get_nextclient_version(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_get_nextclient_version(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -81,10 +89,12 @@ static cell AMX_NATIVE_CALL ncl_get_nextclient_version(AMX* amx, cell* params)
         arg_patch
     };
 
-    if (MF_IsPlayerBot(params[arg_index]))
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
         return FALSE;
+    }
 
-    if (!MF_IsPlayerValid(params[arg_index]))
+    if (!amxx::IsPlayerValid(params[arg_index]))
     {
         LOG(ERROR) << "invalid player index " << params[arg_index];
         return FALSE;
@@ -93,14 +103,14 @@ static cell AMX_NATIVE_CALL ncl_get_nextclient_version(AMX* amx, cell* params)
     NextClientVersion version;
     bool result = NAPI().GetNextClientVersion(params[arg_index], version);
 
-    *MF_GetAmxAddr(amx, params[arg_major]) = (cell)version.major;
-    *MF_GetAmxAddr(amx, params[arg_minor]) = (cell)version.minor;
-    *MF_GetAmxAddr(amx, params[arg_patch]) = (cell)version.patch;
+    *amx::Address(amx, params[arg_major]) = (cell)version.major;
+    *amx::Address(amx, params[arg_minor]) = (cell)version.minor;
+    *amx::Address(amx, params[arg_patch]) = (cell)version.patch;
 
     return result;
 }
 
-static cell AMX_NATIVE_CALL ncl_get_supported_features(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_get_supported_features(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -109,29 +119,31 @@ static cell AMX_NATIVE_CALL ncl_get_supported_features(AMX* amx, cell* params)
         arg_index
     };
 
-    if (MF_IsPlayerBot(params[arg_index]))
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
         return FALSE;
+    }
 
-    if (!MF_IsPlayerValid(params[arg_index]))
+    if (!amxx::IsPlayerValid(params[arg_index]))
     {
         LOG(ERROR) << "invalid player index " << params[arg_index];
         return FALSE;
     }
 
-    cell result = (cell)NAPI().GetSupportedFeatures(params[arg_index]);
+    cell result = NAPI().GetSupportedFeatures(params[arg_index]);
     return result;
 }
 
-static AMX_NATIVE_INFO g_NativeInfo[] = {
-    { "ncl_is_client_api_ready", ncl_is_client_api_ready },
-    { "ncl_is_next_client", ncl_is_next_client },
-    { "ncl_is_using_nextclient", ncl_is_using_nextclient },
-    { "ncl_get_nextclient_version", ncl_get_nextclient_version },
-    { "ncl_get_supported_features", ncl_get_supported_features },
-    { nullptr, nullptr }
+static AmxNativeInfo g_Natives[] = {
+    {"ncl_is_client_api_ready", ncl_is_client_api_ready},
+    {"ncl_is_next_client", ncl_is_next_client},
+    {"ncl_is_using_nextclient", ncl_is_using_nextclient},
+    {"ncl_get_nextclient_version", ncl_get_nextclient_version},
+    {"ncl_get_supported_features", ncl_get_supported_features},
+    {nullptr, nullptr}
 };
 
 void AddNatives_NextClient()
 {
-    MF_AddNatives(g_NativeInfo);
+    amxx::AddNatives(g_Natives);
 }

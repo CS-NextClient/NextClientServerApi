@@ -1,40 +1,62 @@
+#include "amxx/api.h"
+#include "metamod/engine.h"
+
 #include <easylogging++.h>
 #include <elpplog.h>
 #include <kangaru/container.hpp>
-#include <natives/natives.h>
 
-#include "rehlds_api_provider.h"
+#include <core/amxx_access.h>
+#include <core/regamedll_api.h>
+#include <core/messages.h>
+#include <core/rehlds_api.h>
+#include <metamod/gamedll_hooks.h>
+#include <mhooks/amxxapi/amxxapi.h>
+
+#include "natives/natives.h"
 #include "services/HealthNext.h"
 #include "services/NextClientApi.h"
-#include "services/game_events/GameEventsManager.h"
+#include "services/server_events/ServerEventsManager.h"
+#include "services/mod_events/ModEventsManager.h"
 #include "services/CvarSandbox.h"
 #include "services/PrivatePrecache.h"
 #include "services/ViewmodelFX.h"
 #include "services/DeathMsgWpnIcon.h"
 #include "services/HudSprite.h"
 #include "services/Miscellaneous.h"
-#include "services/RehldsHookchainsService.h"
+#include "services/StringRegistry.h"
+#include "services/ncl_entities/EntitySync.h"
+#include "services/ncl_entities/PlayerEntitySync.h"
+#include "services/ncl_entities/WeaponEntitySync.h"
+
+cssdk::CVar cvar_nclapi_version = {"nclapi_version", amxx::MODULE_VERSION, cssdk::FCVAR_SERVER | cssdk::FCVAR_SP_ONLY};
 
 std::unique_ptr<kgr::container> g_RootContainer;
 
-char g_ModuleVersion[] { MODULE_VERSION };
-cvar_t cvar_nclapi_version = { "nclapi_version", g_ModuleVersion, FCVAR_SERVER | FCVAR_SPONLY };
-
-void Initialize()
+bool Initialize()
 {
-    if (!RehldsApi_Init())
+    if (!core::rehlds_api::Init())
     {
-        MF_PrintSrvConsole("[" MODULE_LOGTAG "] Failed to initialize ReHLDS API\n");
-        return;
+        amxx::PrintConsole("[%s] Failed to initialize ReHLDS API\n", amxx::MODULE_LOG_TAG);
+        return false;
+    }
+
+    if (!core::regamedll_api::Init())
+    {
+        amxx::PrintConsole("[%s] Failed to initialize ReGameDLL API\n", amxx::MODULE_LOG_TAG);
+        return false;
     }
 
     ConfigureElppLogger();
 
+    core::amxx_access::Init();
+    core::type_conversion::Init();
+
     g_RootContainer = std::make_unique<kgr::container>();
-    g_RootContainer->emplace<RehldsHookchainsService>(g_RehldsHookchains);
-    g_RootContainer->service<NextClientApiService>();
-    g_RootContainer->service<GameEventsManagerService>();
+    g_RootContainer->service<ServerEventsManagerService>();
+    g_RootContainer->service<ModEventsManagerService>();
     g_RootContainer->service<NclmProtocolService>();
+    g_RootContainer->service<NextClientApiService>();
+    g_RootContainer->service<StringRegistryService>();
     g_RootContainer->service<CvarSandboxService>();
     g_RootContainer->service<PrivatePrecacheService>();
     g_RootContainer->service<ViewmodelFXService>();
@@ -42,12 +64,17 @@ void Initialize()
     g_RootContainer->service<HudSpriteService>();
     g_RootContainer->service<MiscellaneousService>();
     g_RootContainer->service<HealthNextService>();
+    g_RootContainer->service<EntitySyncService>();
+    g_RootContainer->service<PlayerNclEntitySyncService>();
+    g_RootContainer->service<WeaponNclEntitySyncService>();
 
-    CVAR_REGISTER(&cvar_nclapi_version);
+    metamod::engine::CvarRegister(&cvar_nclapi_version);
 
     AddNatives_All();
 
-    LOG(INFO) << MODULE_NAME << " Successfully loaded, version " << MODULE_VERSION;
+    LOG(INFO) << amxx::MODULE_NAME << " Successfully loaded, version " << amxx::MODULE_VERSION;
+
+    return true;
 }
 
 void Deinitialize()
@@ -55,17 +82,37 @@ void Deinitialize()
     g_RootContainer.reset();
 }
 
-void OnAmxxAttach()
+void AmxxPluginsLoadedHandler()
 {
-    Initialize();
+    if (!ServerEventsManager::instance_)
+    {
+        return;
+    }
+
+    ServerEventsManager::instance_->amxx_plugins_loaded_();
 }
 
-void OnAmxxDetach()
+void GameShutdownHandler()
 {
     Deinitialize();
 }
 
-void GameShutdown()
+void AmxxDetachHandler()
 {
     Deinitialize();
+}
+
+amxx::Status AmxxAttachHandler()
+{
+    bool result = Initialize();
+
+    return result ? amxx::Status::Ok : amxx::Status::Failed;
+}
+
+void Main()
+{
+    mhooks::MHookAmxxAttach(core::DELEGATE_ARG<AmxxAttachHandler>);
+    mhooks::MHookAmxxDetach(core::DELEGATE_ARG<AmxxDetachHandler>);
+    mhooks::MHookAmxxPluginsLoaded(core::DELEGATE_ARG<AmxxPluginsLoadedHandler>);
+    metamod::gamedll::HookGameShutdown(GameShutdownHandler, false);
 }

@@ -1,9 +1,11 @@
 #include <easylogging++.h>
-#include "amxxmodule.h"
+
+#include <amxx/api.h>
+
 #include "api_access.h"
 #include "AmxContextGuard.h"
 
-static cell AMX_NATIVE_CALL ncl_sandbox_cvar_begin(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_sandbox_cvar_begin(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -12,10 +14,12 @@ static cell AMX_NATIVE_CALL ncl_sandbox_cvar_begin(AMX* amx, cell* params)
         arg_index
     };
 
-    if (MF_IsPlayerBot(params[arg_index]))
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
         return FALSE;
+    }
 
-    if (!MF_IsPlayerValid(params[arg_index]))
+    if (!amxx::IsPlayerValid(params[arg_index]))
     {
         LOG(ERROR) << "invalid player index " << params[arg_index];
         return FALSE;
@@ -27,7 +31,7 @@ static cell AMX_NATIVE_CALL ncl_sandbox_cvar_begin(AMX* amx, cell* params)
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_sandbox_cvar_end(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_sandbox_cvar_end(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     GetCvarSandbox().End();
@@ -35,7 +39,7 @@ static cell AMX_NATIVE_CALL ncl_sandbox_cvar_end(AMX* amx, cell* params)
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_write_sandbox_cvar(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_sandbox_cvar(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -46,22 +50,21 @@ static cell AMX_NATIVE_CALL ncl_write_sandbox_cvar(AMX* amx, cell* params)
     };
 
     SandboxCvar cvar = (SandboxCvar)params[arg_cvar];
-    std::string value = MF_GetAmxString(amx, params[arg_value], 0, nullptr);
+    std::string value = amx::GetString(amx, params[arg_value]);
 
     GetCvarSandbox().WriteCvar(cvar, value);
 
     return TRUE;
 }
 
-static AMX_NATIVE_INFO g_NativeInfo[] =
-{
-    { "ncl_sandbox_cvar_begin", ncl_sandbox_cvar_begin },
-    { "ncl_sandbox_cvar_end", ncl_sandbox_cvar_end },
-    { "ncl_write_sandbox_cvar", ncl_write_sandbox_cvar },
-    { nullptr, nullptr }
+static AmxNativeInfo g_Natives[] = {
+    {"ncl_sandbox_cvar_begin", ncl_sandbox_cvar_begin},
+    {"ncl_sandbox_cvar_end", ncl_sandbox_cvar_end},
+    {"ncl_write_sandbox_cvar", ncl_write_sandbox_cvar},
+    {nullptr, nullptr}
 };
 
 void AddNatives_CvarSandbox()
 {
-    MF_AddNatives(g_NativeInfo);
+    amxx::AddNatives(g_Natives);
 }

@@ -1,13 +1,17 @@
 #include "rehlds_events.h"
+
 #include "NclmProtocol.h"
 
-void HandleNetCommand(IRehldsHook_HandleNetCommand* hookchain, IGameClient* apiClient, int8 opcode)
+namespace nclm_proto
 {
-    if (!NclmProtocol::instance_)
+    void HandleNetCommandHandler(cssdk::ReHookHandleNetCommand* hookchain, cssdk::IGameClient* client, cssdk::uint8 opcode)
     {
-        hookchain->callNext(apiClient, opcode);
-        return;
-    }
+        if (NclmProtocol::instance_ == nullptr)
+        {
+            hookchain->CallNext(client, opcode);
+            return;
+        }
 
-    NclmProtocol::instance_->ClientMessageHandler(hookchain, apiClient, opcode);
-}
+        NclmProtocol::instance_->ClientMessageHandler(hookchain, client, opcode);
+    }
+} // namespace nclm_proto

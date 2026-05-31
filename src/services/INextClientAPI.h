@@ -1,7 +1,5 @@
 #pragma once
 
-#define BIT(n)  (1<<(n))
-
 enum class NextClientUsing
 {
     NOT_USING,
@@ -9,13 +7,17 @@ enum class NextClientUsing
     USING_VERIFIED
 };
 
+// clang-format off
 enum NextClientFeatures
 {
-    FEATURE_CVARS_SANDBOX = BIT(0),
-    FEATURE_VIEWMODEL_FX = BIT(1),
-    FEATURE_PRIVATE_PRECACHE = BIT(2),
-    FEATURE_VERIFICATION = BIT(3),
-    FEATURE_HUD_SPRITE = BIT(4),
-    FEATURE_HUD_SPRITE_RENDERMODE = BIT(5),
-    FEATURE_DEATHMSG_WPN_ICON = BIT(6)
+    FEATURE_CVARS_SANDBOX         = 1 << 0,
+    FEATURE_VIEWMODEL_FX          = 1 << 1,
+    FEATURE_PRIVATE_PRECACHE      = 1 << 2,
+    FEATURE_VERIFICATION          = 1 << 3,
+    FEATURE_HUD_SPRITE            = 1 << 4,
+    FEATURE_HUD_SPRITE_RENDERMODE = 1 << 5,
+    FEATURE_DEATHMSG_WPN_ICON     = 1 << 6,
+    FEATURE_WEAPON_SOUND_OVERRIDE = 1 << 7,
+    FEATURE_INVERT_MOUSE          = 1 << 8,
 };
+// clang-format on

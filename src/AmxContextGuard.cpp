@@ -1,8 +1,8 @@
 #include "AmxContextGuard.h"
 
-AMX* g_CurrentAmx = nullptr;
+Amx* g_CurrentAmx = nullptr;
 
-AmxContextGuard::AmxContextGuard(AMX* amx) :
+AmxContextGuard::AmxContextGuard(Amx* amx) :
     prev_(g_CurrentAmx)
 {
     g_CurrentAmx = amx;

@@ -2,7 +2,9 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+
 #include <openssl/pem.h>
+
 #include "module_types.h"
 
 struct VerificationPayload
@@ -22,7 +24,12 @@ public:
     ~Verifier();
 
     bool TryCreateVerificationPayload(ClientId client, const std::string& rsa_key_version, VerificationPayload& verification_payload_out);
-    bool ValidateReceivedPayload(ClientId client, const std::vector<uint8_t>& received_payload, const VerificationPayload& verification_payload);
+
+    bool ValidateReceivedPayload(
+        ClientId client,
+        const std::vector<uint8_t>& received_payload,
+        const VerificationPayload& verification_payload
+    );
 
     int ReloadPublicKeys();
 

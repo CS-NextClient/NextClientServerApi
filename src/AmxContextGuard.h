@@ -1,13 +1,13 @@
 #pragma once
-#include "amxxmodule.h"
+#include <amxx/api.h>
 
-extern AMX* g_CurrentAmx;
+extern Amx* g_CurrentAmx;
 
 class AmxContextGuard
 {
-    AMX* prev_;
+    Amx* prev_;
 
 public:
-    explicit AmxContextGuard(AMX* amx);
+    explicit AmxContextGuard(Amx* amx);
     ~AmxContextGuard();
 };

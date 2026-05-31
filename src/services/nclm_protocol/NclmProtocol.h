@@ -1,29 +1,35 @@
 #pragma once
 #include <vector>
+
 #include <kangaru/kangaru.hpp>
 #include <sigslot/signal.hpp>
-#include "services/game_events/GameEventsManager.h"
+
+#include <cssdk/public/rehlds.h>
+
 #include "nclm_proto.h"
 #include "events.h"
-#include "rehlds_events.h"
 #include "Verifier.h"
+#include "services/server_events/ServerEventsManager.h"
+
+namespace nclm_proto
+{
+    void HandleNetCommandHandler(cssdk::ReHookHandleNetCommand* hookchain, cssdk::IGameClient* client, cssdk::uint8 opcode);
+}
 
 class NclmProtocol : public sigslot::observer
 {
-    friend void HandleNetCommand(IRehldsHook_HandleNetCommand* hookchain, IGameClient* apiClient, int8 opcode);
-
     Verifier verifier_;
-    sigslot::signal<ClientAuthEvent>    on_client_auth_;
-    sigslot::signal<HwidReceivedEvent>  on_hwid_received_;
+    sigslot::signal<ClientAuthEvent> on_client_auth_;
+    sigslot::signal<HwidReceivedEvent> on_hwid_received_;
     std::unordered_map<ClientId, VerificationPayload> player_data_;
 
     static NclmProtocol* instance_;
 
 public:
-    explicit NclmProtocol(GameEventsManager& game_events_manager);
+    explicit NclmProtocol(ServerEventsManager& server_events_manager);
     ~NclmProtocol() override;
 
-    sigslot::signal<ClientAuthEvent>&   on_client_auth();
+    sigslot::signal<ClientAuthEvent>& on_client_auth();
     sigslot::signal<HwidReceivedEvent>& on_hwid_received();
 
 private:
@@ -31,15 +37,22 @@ private:
     void VerificationRequestHandler(ClientId client);
     void VerificationChallengeHandler(ClientId client);
     void DeclareVersionHandler(ClientId client);
-    void HardwareIdHandler(ClientId client); 
-    void ClientMessageHandler(IRehldsHook_HandleNetCommand* hookchain, IGameClient* apiClient, int8 opcode);
+    void HardwareIdHandler(ClientId client);
+    void ClientMessageHandler(cssdk::ReHookHandleNetCommand* hookchain, cssdk::IGameClient* client, cssdk::uint8 opcode);
     void ServerActivatedHandler(ServerActivatedEvent event);
     void SendServerInfoHandler(ClientId);
     void ClientDropConnectionHandler(ClientDropConnectionEvent event);
 
     void SendVerificationPayload(ClientId client, const std::vector<uint8_t>& payload);
 
-    sizebuf_t* GetClientReliableChannel(ClientId client);
+    cssdk::SizeBuf* GetClientReliableChannel(ClientId client);
+
+    friend void nclm_proto::HandleNetCommandHandler(
+        cssdk::ReHookHandleNetCommand* hookchain,
+        cssdk::IGameClient* client,
+        cssdk::uint8 opcode
+    );
 };
 
-struct NclmProtocolService : kgr::single_service<NclmProtocol, kgr::dependency<GameEventsManagerService>> {};
+struct NclmProtocolService : kgr::single_service<NclmProtocol, kgr::dependency<ServerEventsManagerService>>
+{};

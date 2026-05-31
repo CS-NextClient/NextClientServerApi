@@ -1,11 +1,20 @@
 #include "CvarSandbox.h"
-#include <easylogging++.h>
-#include "utils/utilfuncs.h"
 
-CvarSandbox::CvarSandbox(GameEventsManager& game_events_manager) :
-    game_events_manager_(game_events_manager)
+#include <easylogging++.h>
+
+#include <metamod/engine.h>
+#include <core/type_conversion.h>
+
+#include "utils/msg_ex.h"
+
+using namespace metamod;
+using namespace core;
+using namespace msg_ex;
+
+CvarSandbox::CvarSandbox(ServerEventsManager& server_events_manager) :
+    server_events_manager_(server_events_manager)
 {
-    game_events_manager_.on_server_activated().connect(&CvarSandbox::ServerActivatedHandler, this);
+    server_events_manager_.on_server_activated().connect(&CvarSandbox::ServerActivatedHandler, this);
 }
 
 void CvarSandbox::Begin(ClientId client)
@@ -16,8 +25,8 @@ void CvarSandbox::Begin(ClientId client)
         return;
     }
 
-    MESSAGE_BEGIN(MSG_ONE, message_sandbox_cvar_, nullptr, INDEXENT(client));
-    WRITE_BYTE(255);
+    MessageBegin(cssdk::MessageType::One, message_sandbox_cvar_, nullptr, type_conversion::EdictByIndex(client));
+    WriteByte(255);
 
     is_message_building_ = true;
 }
@@ -30,7 +39,7 @@ void CvarSandbox::End()
         return;
     }
 
-    MESSAGE_END();
+    MessageEnd();
 
     is_message_building_ = false;
 }
@@ -43,11 +52,11 @@ void CvarSandbox::WriteCvar(SandboxCvar cvar, const std::string& value)
         return;
     }
 
-    WRITE_BYTE((int)cvar);
-    WRITE_STRING(value.c_str());
+    WriteByte(static_cast<uint8_t>(cvar));
+    WriteString(value.c_str());
 }
 
 void CvarSandbox::ServerActivatedHandler(ServerActivatedEvent server_activated_event)
 {
-    message_sandbox_cvar_ = utils::RegUserMsgSafe("SandboxCvar", -1);
+    message_sandbox_cvar_ = RegUserMsgSafe("SandboxCvar", -1);
 }

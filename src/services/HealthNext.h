@@ -1,7 +1,10 @@
 #pragma once
 #include <kangaru/kangaru.hpp>
 #include <sigslot/signal.hpp>
-#include "game_events/GameEventsManager.h"
+
+#include <cssdk/engine/edict.h>
+
+#include "server_events/ServerEventsManager.h"
 #include "INextClientInfo.h"
 
 class HealthNext : public sigslot::observer
@@ -13,12 +16,12 @@ class HealthNext : public sigslot::observer
 
     bool should_send_health_ex_{};
     int msg_save_hp_{};
-    int msg_save_dest_{};
+    cssdk::MessageType msg_save_dest_{};
     float msg_save_origin_[3]{};
-    edict_t* msg_save_ed_{};
+    cssdk::Edict* msg_save_ed_{};
 
 public:
-    explicit HealthNext(GameEventsManager& game_events_manager, INextClientInfo& next_client_info);
+    explicit HealthNext(ServerEventsManager& server_events_manager, INextClientInfo& next_client_info);
 
 private:
     void ServerActivatedHandler(ServerActivatedEvent event);
@@ -26,4 +29,5 @@ private:
     void MessageEndPostHandler();
 };
 
-struct HealthNextService : kgr::single_service<HealthNext, kgr::dependency<GameEventsManagerService, INextClientInfoService>> {};
+struct HealthNextService : kgr::single_service<HealthNext, kgr::dependency<ServerEventsManagerService, INextClientInfoService>>
+{};

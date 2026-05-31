@@ -1,9 +1,11 @@
 #include <easylogging++.h>
-#include "amxxmodule.h"
+
+#include <amxx/api.h>
+
 #include "api_access.h"
 #include "AmxContextGuard.h"
 
-static cell AMX_NATIVE_CALL ncl_viewmodelfx_begin(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_viewmodelfx_begin(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -12,10 +14,12 @@ static cell AMX_NATIVE_CALL ncl_viewmodelfx_begin(AMX* amx, cell* params)
         arg_index
     };
 
-    if (MF_IsPlayerBot(params[arg_index]))
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
         return FALSE;
+    }
 
-    if (!MF_IsPlayerValid(params[arg_index]))
+    if (!amxx::IsPlayerValid(params[arg_index]))
     {
         LOG(ERROR) << "invalid player index " << params[arg_index];
         return FALSE;
@@ -25,14 +29,14 @@ static cell AMX_NATIVE_CALL ncl_viewmodelfx_begin(AMX* amx, cell* params)
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_viewmodelfx_end(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_viewmodelfx_end(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     GetViewmodelFX().End();
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_write_rendermode(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_rendermode(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -45,7 +49,7 @@ static cell AMX_NATIVE_CALL ncl_write_rendermode(AMX* amx, cell* params)
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_write_renderamt(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_renderamt(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -58,7 +62,7 @@ static cell AMX_NATIVE_CALL ncl_write_renderamt(AMX* amx, cell* params)
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_write_renderfx(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_renderfx(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -71,7 +75,7 @@ static cell AMX_NATIVE_CALL ncl_write_renderfx(AMX* amx, cell* params)
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_write_renderskin(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_renderskin(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -84,7 +88,7 @@ static cell AMX_NATIVE_CALL ncl_write_renderskin(AMX* amx, cell* params)
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_write_renderbody(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_renderbody(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -97,7 +101,7 @@ static cell AMX_NATIVE_CALL ncl_write_renderbody(AMX* amx, cell* params)
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_write_rendercolor(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_write_rendercolor(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -112,19 +116,19 @@ static cell AMX_NATIVE_CALL ncl_write_rendercolor(AMX* amx, cell* params)
     return TRUE;
 }
 
-static AMX_NATIVE_INFO g_NativeInfo[] = {
-    { "ncl_viewmodelfx_begin", ncl_viewmodelfx_begin },
-    { "ncl_viewmodelfx_end", ncl_viewmodelfx_end },
-    { "ncl_write_rendermode", ncl_write_rendermode },
-    { "ncl_write_renderamt", ncl_write_renderamt },
-    { "ncl_write_renderfx", ncl_write_renderfx },
-    { "ncl_write_renderskin", ncl_write_renderskin },
-    { "ncl_write_renderbody", ncl_write_renderbody },
-    { "ncl_write_rendercolor", ncl_write_rendercolor },
-    { nullptr, nullptr }
+static AmxNativeInfo g_Natives[] = {
+    {"ncl_viewmodelfx_begin", ncl_viewmodelfx_begin},
+    {"ncl_viewmodelfx_end", ncl_viewmodelfx_end},
+    {"ncl_write_rendermode", ncl_write_rendermode},
+    {"ncl_write_renderamt", ncl_write_renderamt},
+    {"ncl_write_renderfx", ncl_write_renderfx},
+    {"ncl_write_renderskin", ncl_write_renderskin},
+    {"ncl_write_renderbody", ncl_write_renderbody},
+    {"ncl_write_rendercolor", ncl_write_rendercolor},
+    {nullptr, nullptr}
 };
 
 void AddNatives_ViewmodelFX()
 {
-    MF_AddNatives(g_NativeInfo);
+    amxx::AddNatives(g_Natives);
 }

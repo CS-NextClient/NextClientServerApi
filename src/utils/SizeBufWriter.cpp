@@ -1,75 +1,90 @@
 #include "SizeBufWriter.h"
 #include <easylogging++.h>
+#include <core/rehlds_api.h>
 
-SizeBufWriter::SizeBufWriter(sizebuf_t* output_buf, size_t maxsize) :
+using namespace core::rehlds_api;
+
+SizeBufWriter::SizeBufWriter(cssdk::SizeBuf* output_buf, size_t maxsize) :
     output_buf_(output_buf),
     maxsize_(maxsize)
 {
     temp_buf_data_.resize(maxsize);
 
-    temp_buf_.buffername = "SizeBufWriter::temp_buf_";
+    temp_buf_.buffer_name = "SizeBufWriter::temp_buf_";
     temp_buf_.data = temp_buf_data_.data();
-    temp_buf_.maxsize = maxsize;
-    temp_buf_.cursize = 0;
-    temp_buf_.flags = SIZEBUF_ALLOW_OVERFLOW;
+    temp_buf_.max_size = maxsize;
+    temp_buf_.cur_size = 0;
+    temp_buf_.flags = cssdk::SIZEBUF_ALLOW_OVERFLOW;
 }
 
 void SizeBufWriter::Send()
 {
-    g_RehldsFuncs->MSG_WriteBuf(output_buf_, temp_buf_.cursize, temp_buf_.data);
+    Funcs()->msg_write_buf(output_buf_, temp_buf_.cur_size, temp_buf_.data);
 }
 
-SizeBufWriter* SizeBufWriter::WriteByte(uint8_t data)
+SizeBufWriter& SizeBufWriter::WriteByte(uint8_t data)
 {
-    g_RehldsFuncs->MSG_WriteByte(&temp_buf_, data);
-    return this;
+    Funcs()->msg_write_byte(&temp_buf_, data);
+    return *this;
 }
 
-SizeBufWriter* SizeBufWriter::WriteString(std::string_view data)
+SizeBufWriter& SizeBufWriter::WriteShort(int16_t data)
 {
-    g_RehldsFuncs->MSG_WriteString(&temp_buf_, data.data());
-    return this;
+    Funcs()->msg_write_short(&temp_buf_, data);
+    return *this;
 }
 
-SizeBufWriter* SizeBufWriter::WriteLong(long data)
+SizeBufWriter& SizeBufWriter::WriteUShort(uint16_t data)
 {
-    g_RehldsFuncs->MSG_WriteLong(&temp_buf_, data);
-    return this;
+    Funcs()->msg_write_short(&temp_buf_, data);
+    return *this;
 }
 
-SizeBufWriter* SizeBufWriter::WriteBuf(const std::vector<uint8_t>& data)
+SizeBufWriter& SizeBufWriter::WriteString(const std::string& data)
 {
-    g_RehldsFuncs->MSG_WriteBuf(&temp_buf_, data.size(), data.data());
-    return this;
+    Funcs()->msg_write_string(&temp_buf_, data.c_str());
+    return *this;
+}
+
+SizeBufWriter& SizeBufWriter::WriteLong(uint32_t data)
+{
+    Funcs()->msg_write_long(&temp_buf_, data);
+    return *this;
+}
+
+SizeBufWriter& SizeBufWriter::WriteBuf(const std::vector<uint8_t>& data)
+{
+    Funcs()->msg_write_buf(&temp_buf_, data.size(), const_cast<uint8_t*>(data.data()));
+    return *this;
 }
 
 std::vector<uint8_t> SizeBufWriter::GetTempBufCurSizeSlice()
 {
-    return std::vector<uint8_t>(
-        temp_buf_data_.begin(), temp_buf_data_.begin() + temp_buf_.cursize
-    );
+    return std::vector(temp_buf_data_.begin(), temp_buf_data_.begin() + temp_buf_.cur_size);
 }
 
-void SizeBufWriter::ReplaceTempBufWithSlice(std::vector<uint8_t>& slice)
+bool SizeBufWriter::ReplaceTempBufWithSlice(std::vector<uint8_t>& slice)
 {
     if (slice.size() > maxsize_)
     {
         LOG(ERROR) << "overflow (size: " << slice.size() << ", max: " << maxsize_ << ")";
-        return;
+        temp_buf_.cur_size = 0;
+        return false;
     }
 
     temp_buf_data_.assign(slice.begin(), slice.end());
     temp_buf_data_.resize(maxsize_);
 
-    temp_buf_.cursize = slice.size();
+    temp_buf_.cur_size = slice.size();
+    return true;
 }
 
-sizebuf_t* SizeBufWriter::GetTempSizeBuf()
+cssdk::SizeBuf* SizeBufWriter::GetTempSizeBuf()
 {
     return &temp_buf_;
 }
 
-sizebuf_t* SizeBufWriter::GetOutputSizeBuf() const
+cssdk::SizeBuf* SizeBufWriter::GetOutputSizeBuf() const
 {
     return output_buf_;
 }

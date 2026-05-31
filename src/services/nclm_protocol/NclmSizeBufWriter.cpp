@@ -1,7 +1,8 @@
 #include "NclmSizeBufWriter.h"
+
 #include "nclm_proto.h"
 
-NclmSizeBufWriter::NclmSizeBufWriter(sizebuf_t* output_buf, size_t maxsize) :
+NclmSizeBufWriter::NclmSizeBufWriter(cssdk::SizeBuf* output_buf, size_t maxsize) :
     SizeBufWriter(output_buf, maxsize)
 {
     WriteByte(SVC_NCL_MESSAGE);
@@ -11,19 +12,27 @@ NclmSizeBufWriter::NclmSizeBufWriter(sizebuf_t* output_buf, size_t maxsize) :
 void NclmSizeBufWriter::Send()
 {
     std::vector<uint8_t> slice = GetTempBufCurSizeSlice();
+    std::vector<uint8_t> escaped_slice;
+    escaped_slice.reserve(slice.size() * 11 / 10); // reserve 10% extra space to avoid allocations
 
-    for (auto it = slice.begin(); it != slice.end(); it++)
+    for (uint8_t symbol : slice)
     {
-        uint8_t symbol = *it;
-
-        if (escaping_symbols_.count(symbol))
+        auto it = escaping_symbols_.find(symbol);
+        if (it != escaping_symbols_.end())
         {
-            *it = '^';
-            it = slice.insert(it + 1, escaping_symbols_.at(symbol));
+            escaped_slice.push_back('^');
+            escaped_slice.push_back(it->second);
+        }
+        else
+        {
+            escaped_slice.push_back(symbol);
         }
     }
-    slice.push_back(0);
+    escaped_slice.push_back(0);
 
-    ReplaceTempBufWithSlice(slice);
+    if (!ReplaceTempBufWithSlice(escaped_slice))
+    {
+        return;
+    }
     SizeBufWriter::Send();
 }

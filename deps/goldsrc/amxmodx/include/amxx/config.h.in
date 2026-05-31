@@ -1,0 +1,63 @@
+/*
+ *  Copyright (C) 2020 the_hunter
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#ifdef USE_METAMOD
+#include <metamod/config.h>
+#endif
+
+/*
+ * -------------------------------------------------------------------------------------------
+ *	AMXX init function declarations.
+ * -------------------------------------------------------------------------------------------
+ */
+
+#cmakedefine AMXX_QUERY @AMXX_QUERY@
+#cmakedefine AMXX_CHECK_GAME @AMXX_CHECK_GAME@
+#cmakedefine AMXX_ATTACH @AMXX_ATTACH@
+#cmakedefine AMXX_DETACH @AMXX_DETACH@
+#cmakedefine AMXX_PLUGINS_LOADED @AMXX_PLUGINS_LOADED@
+#cmakedefine AMXX_PLUGINS_UNLOADED @AMXX_PLUGINS_UNLOADED@
+#cmakedefine AMXX_PLUGINS_UNLOADING @AMXX_PLUGINS_UNLOADING@
+
+namespace amxx
+{
+    /*
+    * -------------------------------------------------------------------------------------------
+    *	AMXX module info.
+    * -------------------------------------------------------------------------------------------
+    */
+#ifndef USE_METAMOD
+    constexpr auto MODULE_NAME = "@AMXX_MODULE_NAME@";
+    constexpr auto MODULE_VERSION = "@AMXX_MODULE_VERSION@";
+    constexpr auto MODULE_AUTHOR = "@AMXX_MODULE_AUTHOR@";
+    constexpr auto MODULE_LOG_TAG = "@AMXX_MODULE_LOG_TAG@";
+    constexpr auto MODULE_URL = "@AMXX_MODULE_URL@";
+    constexpr auto MODULE_DATE = @AMXX_MODULE_DATE@;
+#else
+    constexpr auto MODULE_NAME = metamod::PLUGIN_NAME;
+    constexpr auto MODULE_VERSION = metamod::PLUGIN_VERSION;
+    constexpr auto MODULE_AUTHOR = metamod::PLUGIN_AUTHOR;
+    constexpr auto MODULE_URL = metamod::PLUGIN_URL;
+    constexpr auto MODULE_LOG_TAG = metamod::PLUGIN_LOG_TAG;
+    constexpr auto MODULE_DATE = metamod::PLUGIN_DATE;
+#endif
+    constexpr auto MODULE_LIBRARY = "@AMXX_MODULE_LIBRARY@";
+    constexpr auto MODULE_LIB_CLASS = "@AMXX_MODULE_LIB_CLASS@";
+    constexpr auto MODULE_RELOAD_ON_MAP_CHANGE = @AMXX_MODULE_RELOAD_ON_MAP_CHANGE@; // Only for amxx modules without metamod.
+}

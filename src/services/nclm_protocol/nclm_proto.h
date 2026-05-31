@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef MAKEID
+    #define MAKEID(d,c,b,a)					( ((int)(a) << 24) | ((int)(b) << 16) | ((int)(c) << 8) | ((int)(d)) )
+#endif
+
 #define clc_ncl_message						3			// clc_stringcmd
 #define SVC_NCL_MESSAGE						57			// SVC_SENDCVARVALUE
 #define NCLM_HEADER_OLD						MAKEID('n', 'c', 'l', 'a')
@@ -43,7 +47,7 @@ enum class NCLM_C2S
 	 * Non-NextClient or older clients will never send this opcode.
 	 * Server must NOT kick clients that omit it — store empty string instead.
 	 */
-	HARDWARE_ID                         // = 0x04 (sequential)
+	HARDWARE_ID,                        // = 0x04 (sequential)
 };
 
 enum class NCLM_S2C
@@ -52,5 +56,5 @@ enum class NCLM_S2C
 		byte		Message header
 		256 bytes	Encrypted message payload
 	*/
-	VERIFICATION_PAYLOAD
+	VERIFICATION_PAYLOAD,
 };

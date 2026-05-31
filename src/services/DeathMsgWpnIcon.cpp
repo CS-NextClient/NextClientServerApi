@@ -1,9 +1,17 @@
 #include "DeathMsgWpnIcon.h"
-#include "utils/utilfuncs.h"
 
-DeathMsgWpnIcon::DeathMsgWpnIcon(GameEventsManager& game_events_manager)
+#include <metamod/engine.h>
+#include <core/type_conversion.h>
+
+#include "utils/msg_ex.h"
+
+using namespace metamod;
+using namespace core;
+using namespace msg_ex;
+
+DeathMsgWpnIcon::DeathMsgWpnIcon(ServerEventsManager& server_events_manager)
 {
-    game_events_manager.on_server_activated().connect(&DeathMsgWpnIcon::ServerActivatedHandler, this);
+    server_events_manager.on_server_activated().connect(&DeathMsgWpnIcon::ServerActivatedHandler, this);
 }
 
 void DeathMsgWpnIcon::SetIconForNextMessage(
@@ -17,25 +25,28 @@ void DeathMsgWpnIcon::SetIconForNextMessage(
     int recipient_id
 )
 {
+    if (message_deathmsg_wpn_icon_ <= 0)
+        return;
+
     if (recipient_id != 0)
     {
-        MESSAGE_BEGIN(MSG_ONE, message_deathmsg_wpn_icon_, nullptr, INDEXENT(recipient_id));
+        MessageBegin(cssdk::MessageType::One, message_deathmsg_wpn_icon_, nullptr, type_conversion::EdictByIndex(recipient_id));
     }
     else
     {
-        MESSAGE_BEGIN(MSG_ALL, message_deathmsg_wpn_icon_);
+        MessageBegin(cssdk::MessageType::All, message_deathmsg_wpn_icon_);
     }
-    WRITE_STRING(sprite.c_str());
-    WRITE_BYTE(frame);
-    WRITE_BYTE(rendermode);
-    WRITE_BYTE(r);
-    WRITE_BYTE(g);
-    WRITE_BYTE(b);
-    WRITE_BYTE(a);
-    MESSAGE_END();
+    WriteString(sprite.c_str());
+    WriteByte(frame);
+    WriteByte(rendermode);
+    WriteByte(r);
+    WriteByte(g);
+    WriteByte(b);
+    WriteByte(a);
+    MessageEnd();
 }
 
 void DeathMsgWpnIcon::ServerActivatedHandler(ServerActivatedEvent server_activated_event)
 {
-    message_deathmsg_wpn_icon_ = utils::RegUserMsgSafe("DeathMsgWpn", -1);
+    message_deathmsg_wpn_icon_ = RegUserMsgSafe("DeathMsgWpn", -1);
 }

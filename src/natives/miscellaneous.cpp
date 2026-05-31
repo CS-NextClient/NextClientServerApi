@@ -1,9 +1,11 @@
 #include <easylogging++.h>
-#include "amxxmodule.h"
+
+#include <amxx/api.h>
+
 #include "api_access.h"
 #include "AmxContextGuard.h"
 
-static cell AMX_NATIVE_CALL ncl_setfov(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_setfov(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -14,20 +16,22 @@ static cell AMX_NATIVE_CALL ncl_setfov(AMX* amx, cell* params)
         arg_lerpTime
     };
 
-    if (MF_IsPlayerBot(params[arg_index]))
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
         return FALSE;
+    }
 
-    if (!MF_IsPlayerValid(params[arg_index]))
+    if (!amxx::IsPlayerValid(params[arg_index]))
     {
         LOG(ERROR) << "invalid player index " << params[arg_index];
         return FALSE;
     }
 
-    GetMiscellaneous().ClientSetFOV(params[arg_index], params[arg_fov], amx_ctof(params[arg_lerpTime]));
+    GetMiscellaneous().ClientSetFOV(params[arg_index], params[arg_fov], amx::CellToFloat(params[arg_lerpTime]));
     return TRUE;
 }
 
-static cell AMX_NATIVE_CALL ncl_invert_mouse(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_invert_mouse(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -38,10 +42,12 @@ static cell AMX_NATIVE_CALL ncl_invert_mouse(AMX* amx, cell* params)
         arg_invert_yaw,
     };
 
-    if (MF_IsPlayerBot(params[arg_index]))
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
         return FALSE;
+    }
 
-    if (!MF_IsPlayerValid(params[arg_index]))
+    if (!amxx::IsPlayerValid(params[arg_index]))
     {
         LOG(ERROR) << "invalid player index " << params[arg_index];
         return FALSE;
@@ -51,14 +57,15 @@ static cell AMX_NATIVE_CALL ncl_invert_mouse(AMX* amx, cell* params)
     return TRUE;
 }
 
-static AMX_NATIVE_INFO g_NativeInfo[] =
-{
-    { "ncl_setfov", ncl_setfov },
-    { "ncl_invert_mouse", ncl_invert_mouse },
-    { nullptr, nullptr }
+// clang-format off
+static AmxNativeInfo g_Natives[] = {
+    {"ncl_setfov", ncl_setfov}, 
+    {"ncl_invert_mouse", ncl_invert_mouse}, 
+    {nullptr, nullptr}
 };
+// clang-format on
 
 void AddNatives_Miscellaneous()
 {
-    MF_AddNatives(g_NativeInfo);
+    amxx::AddNatives(g_Natives);
 }

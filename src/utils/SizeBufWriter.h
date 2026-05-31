@@ -1,27 +1,30 @@
 #pragma once
 #include <vector>
-#include "rehlds_api_provider.h"
+#include <string>
+#include <cssdk/public/rehlds/common_rehlds.h>
 
 class SizeBufWriter
 {
-    sizebuf_t* output_buf_{};
-    sizebuf_t temp_buf_{};
+    cssdk::SizeBuf* output_buf_{};
+    cssdk::SizeBuf temp_buf_{};
     size_t maxsize_{};
     std::vector<uint8_t> temp_buf_data_{};
 
 public:
-    explicit SizeBufWriter(sizebuf_t* output_buf, size_t maxsize);
+    explicit SizeBufWriter(cssdk::SizeBuf* output_buf, size_t maxsize);
     virtual ~SizeBufWriter() = default;
 
     virtual void Send();
-    SizeBufWriter* WriteByte(uint8_t data);
-    SizeBufWriter* WriteString(std::string_view data);
-    SizeBufWriter* WriteLong(long data);
-    SizeBufWriter* WriteBuf(const std::vector<uint8_t>& data);
+    SizeBufWriter& WriteByte(uint8_t data);
+    SizeBufWriter& WriteShort(int16_t data);
+    SizeBufWriter& WriteUShort(uint16_t data);
+    SizeBufWriter& WriteString(const std::string& data);
+    SizeBufWriter& WriteLong(uint32_t data);
+    SizeBufWriter& WriteBuf(const std::vector<uint8_t>& data);
 
 protected:
     std::vector<uint8_t> GetTempBufCurSizeSlice();
-    void ReplaceTempBufWithSlice(std::vector<uint8_t>& slice);
-    sizebuf_t* GetTempSizeBuf();
-    sizebuf_t* GetOutputSizeBuf() const;
+    bool ReplaceTempBufWithSlice(std::vector<uint8_t>& slice);
+    cssdk::SizeBuf* GetTempSizeBuf();
+    cssdk::SizeBuf* GetOutputSizeBuf() const;
 };

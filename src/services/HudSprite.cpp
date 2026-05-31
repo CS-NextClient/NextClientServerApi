@@ -1,9 +1,17 @@
 #include "HudSprite.h"
-#include "utils/utilfuncs.h"
 
-HudSprite::HudSprite(GameEventsManager& game_events_manager)
+#include <metamod/engine.h>
+#include <core/type_conversion.h>
+
+#include "utils/msg_ex.h"
+
+using namespace metamod;
+using namespace core;
+using namespace msg_ex;
+
+HudSprite::HudSprite(ServerEventsManager& server_events_manager)
 {
-    game_events_manager.on_server_activated().connect(&HudSprite::ServerActivatedHandler, this);
+    server_events_manager.on_server_activated().connect(&HudSprite::ServerActivatedHandler, this);
 }
 
 void HudSprite::SendHudSprite(
@@ -25,29 +33,34 @@ void HudSprite::SendHudSprite(
     int render_mode
 )
 {
-    MESSAGE_BEGIN(MSG_ONE, message_hud_sprite_, nullptr, INDEXENT(client));
-    WRITE_BYTE(channel);
-    WRITE_STRING(sprite_path);
-    WRITE_BYTE(0);
-    WRITE_BYTE(sprite_color[0]);
-    WRITE_BYTE(sprite_color[1]);
-    WRITE_BYTE(sprite_color[2]);
-    WRITE_BYTE(alpha);
-    WRITE_SHORT(frame);
-    WRITE_FLOAT(frame_rate);
-    WRITE_FLOAT(in_time);
-    WRITE_FLOAT(hold_time);
-    WRITE_FLOAT(out_time);
-    WRITE_FLOAT(x);
-    WRITE_FLOAT(y);
-    WRITE_SHORT(sprite_rect[0]);
-    WRITE_SHORT(sprite_rect[1]);
-    WRITE_SHORT(sprite_rect[2]);
-    WRITE_SHORT(sprite_rect[3]);
-    WRITE_FLOAT(scale_x);
-    WRITE_FLOAT(scale_y);
-    WRITE_BYTE(render_mode);
-    MESSAGE_END();
+    if (message_hud_sprite_ <= 0)
+    {
+        return;
+    }
+
+    MessageBegin(cssdk::MessageType::One, message_hud_sprite_, nullptr, type_conversion::EdictByIndex(client));
+    WriteByte(channel);
+    WriteString(sprite_path);
+    WriteByte(0);
+    WriteByte(sprite_color[0]);
+    WriteByte(sprite_color[1]);
+    WriteByte(sprite_color[2]);
+    WriteByte(alpha);
+    WriteShort(frame);
+    WriteFloat(frame_rate);
+    WriteFloat(in_time);
+    WriteFloat(hold_time);
+    WriteFloat(out_time);
+    WriteFloat(x);
+    WriteFloat(y);
+    WriteShort(sprite_rect[0]);
+    WriteShort(sprite_rect[1]);
+    WriteShort(sprite_rect[2]);
+    WriteShort(sprite_rect[3]);
+    WriteFloat(scale_x);
+    WriteFloat(scale_y);
+    WriteByte(render_mode);
+    MessageEnd();
 }
 
 void HudSprite::SendHudSpriteFullScreen(
@@ -64,32 +77,40 @@ void HudSprite::SendHudSpriteFullScreen(
     int render_mode
 )
 {
-    MESSAGE_BEGIN(MSG_ONE, message_hud_sprite_, nullptr, INDEXENT(client));
-    WRITE_BYTE(channel);
-    WRITE_STRING(sprite_path);
-    WRITE_BYTE(1);
-    WRITE_BYTE(sprite_color[0]);
-    WRITE_BYTE(sprite_color[1]);
-    WRITE_BYTE(sprite_color[2]);
-    WRITE_BYTE(alpha);
-    WRITE_SHORT(frame);
-    WRITE_FLOAT(frame_rate);
-    WRITE_FLOAT(in_time);
-    WRITE_FLOAT(hold_time);
-    WRITE_FLOAT(out_time);
-    WRITE_BYTE(render_mode);
-    MESSAGE_END();
+    if (message_hud_sprite_ <= 0)
+    {
+        return;
+    }
+
+    MessageBegin(cssdk::MessageType::One, message_hud_sprite_, nullptr, type_conversion::EdictByIndex(client));
+    WriteByte(channel);
+    WriteString(sprite_path);
+    WriteByte(1);
+    WriteByte(sprite_color[0]);
+    WriteByte(sprite_color[1]);
+    WriteByte(sprite_color[2]);
+    WriteByte(alpha);
+    WriteShort(frame);
+    WriteFloat(frame_rate);
+    WriteFloat(in_time);
+    WriteFloat(hold_time);
+    WriteFloat(out_time);
+    WriteByte(render_mode);
+    MessageEnd();
 }
 
 void HudSprite::ClearHudSprite(int client, int channel)
 {
-    MESSAGE_BEGIN(MSG_ONE, message_hud_sprite_, nullptr, INDEXENT(client));
-    WRITE_BYTE(channel);
-    WRITE_STRING("");
-    MESSAGE_END();
+    if (message_hud_sprite_ <= 0)
+        return;
+
+    MessageBegin(cssdk::MessageType::One, message_hud_sprite_, nullptr, type_conversion::EdictByIndex(client));
+    WriteByte(channel);
+    WriteString("");
+    MessageEnd();
 }
 
 void HudSprite::ServerActivatedHandler(ServerActivatedEvent event)
 {
-    message_hud_sprite_ = utils::RegUserMsgSafe("HudSprite", -1);
+    message_hud_sprite_ = RegUserMsgSafe("HudSprite", -1);
 }

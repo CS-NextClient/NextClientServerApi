@@ -1,9 +1,11 @@
 #include <easylogging++.h>
-#include "amxxmodule.h"
+
+#include <amxx/api.h>
+
 #include "api_access.h"
 #include "AmxContextGuard.h"
 
-static cell AMX_NATIVE_CALL ncl_precache_model(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_precache_model(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -13,8 +15,8 @@ static cell AMX_NATIVE_CALL ncl_precache_model(AMX* amx, cell* params)
         arg_nclFilepath
     };
 
-    std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, nullptr);
-    std::string ncl_filepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, nullptr);
+    std::string filepath = amx::GetString(amx, params[arg_filepath]);
+    std::string ncl_filepath = amx::GetString(amx, params[arg_nclFilepath]);
 
     int model_index = GetPrivatePrecache().PrecacheModel(filepath, ncl_filepath);
     if (model_index == 0)
@@ -26,7 +28,7 @@ static cell AMX_NATIVE_CALL ncl_precache_model(AMX* amx, cell* params)
     return model_index;
 }
 
-static cell AMX_NATIVE_CALL ncl_precache_sound(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_precache_sound(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -36,8 +38,8 @@ static cell AMX_NATIVE_CALL ncl_precache_sound(AMX* amx, cell* params)
         arg_nclFilepath
     };
 
-    std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, nullptr);
-    std::string ncl_filepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, nullptr);
+    std::string filepath = amx::GetString(amx, params[arg_filepath]);
+    std::string ncl_filepath = amx::GetString(amx, params[arg_nclFilepath]);
 
     int sound_index = GetPrivatePrecache().PrecacheSound(filepath, ncl_filepath);
     if (sound_index == 0)
@@ -49,7 +51,7 @@ static cell AMX_NATIVE_CALL ncl_precache_sound(AMX* amx, cell* params)
     return sound_index;
 }
 
-static cell AMX_NATIVE_CALL ncl_upload_file(AMX* amx, cell* params)
+static cell AMX_NATIVE_CALL ncl_upload_file(Amx* amx, cell* params)
 {
     AmxContextGuard guard(amx);
     enum args_e
@@ -59,8 +61,8 @@ static cell AMX_NATIVE_CALL ncl_upload_file(AMX* amx, cell* params)
         arg_nclFilepath
     };
 
-    std::string filepath = MF_GetAmxString(amx, params[arg_filepath], 0, nullptr);
-    std::string ncl_filepath = MF_GetAmxString(amx, params[arg_nclFilepath], 1, nullptr);
+    std::string filepath = amx::GetString(amx, params[arg_filepath]);
+    std::string ncl_filepath = amx::GetString(amx, params[arg_nclFilepath]);
 
     int result = GetPrivatePrecache().UploadFile(filepath, ncl_filepath);
     if (result == 0)
@@ -72,14 +74,14 @@ static cell AMX_NATIVE_CALL ncl_upload_file(AMX* amx, cell* params)
     return TRUE;
 }
 
-static AMX_NATIVE_INFO nativeInfoPrivatePrecache[] = {
-    { "ncl_precache_model", ncl_precache_model },
-    { "ncl_precache_sound", ncl_precache_sound },
-    { "ncl_upload_file", ncl_upload_file },
-    { nullptr, nullptr }
+static AmxNativeInfo g_Natives[] = {
+    {"ncl_precache_model", ncl_precache_model},
+    {"ncl_precache_sound", ncl_precache_sound},
+    {"ncl_upload_file", ncl_upload_file},
+    {nullptr, nullptr}
 };
 
 void AddNatives_PrivatePrecache()
 {
-    MF_AddNatives(nativeInfoPrivatePrecache);
+    amxx::AddNatives(g_Natives);
 }

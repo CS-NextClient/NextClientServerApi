@@ -1,0 +1,68 @@
+---
+# The style used for all options not specifically set in the configuration.
+BasedOnStyle: WebKit
+# Denoting the programming language this section of the configuration is targeted at.
+Language: Cpp
+# Parse and format C++ constructs compatible with this standard.
+Standard: c++17
+# If true, horizontally aligns arguments after an open bracket.
+AlignAfterOpenBracket: true
+# if not None, when using initialization for an array of structs aligns the fields into columns. (clang-format 13)
+#AlignArrayOfStructures: Left
+# If a function call or braced initializer list doesn’t fit on a line, allow putting all arguments onto the next line, even if BinPackArguments is false.
+AllowAllArgumentsOnNextLine: true
+# If the function declaration doesn’t fit on a line, allow putting all parameters of a function declaration onto the next line even if BinPackParameters is false.
+AllowAllParametersOfDeclarationOnNextLine: false
+# Dependent on the value, int f() { return 0; } can be put on a single line.
+AllowShortFunctionsOnASingleLine: false
+# The template declaration breaking style to use.
+AlwaysBreakTemplateDeclarations: true
+# If false, a function call’s arguments will either be all on the same line or will have one line each.
+BinPackArguments: true
+# If false, a function declaration’s or function definition’s parameters will either all be on the same line or will have one line each.
+BinPackParameters: true
+# Control of individual brace wrapping cases.
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterEnum: true
+  AfterExternBlock: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeElse: true
+  BeforeWhile: true
+# The way to wrap binary operators.
+BreakBeforeBinaryOperators: None
+# The break constructor initializers style to use.
+BreakConstructorInitializers: BeforeColon
+# The column limit.
+ColumnLimit: 0
+# If true, format braced lists as best suited for C++11 braced lists.
+Cpp11BracedListStyle: true
+# If true, analyze the formatted file for the most common alignment of & and *. Pointer and reference alignment styles are going to be updated according to the preferences found in the file. PointerAlignment is then used only as fallback.
+DerivePointerAlignment: false
+# The indentation used for namespaces.
+NamespaceIndentation: All
+# The pack constructor initializers style to use. (clang-format 14)
+#PackConstructorInitializers: CurrentLine
+# Controls if and how clang-format will sort #includes.
+SortIncludes: false
+# If true, a space will be inserted before a C++11 braced list used to initialize an object (after the preceding identifier or type).
+SpaceBeforeCpp11BracedList: false
+# If false, spaces will be removed before constructor initializer colon.
+SpaceBeforeCtorInitializerColon: true
+# If false, spaces will be removed before inheritance colon.
+SpaceBeforeInheritanceColon: true
+# Defines in which cases to put a space before opening parentheses.
+SpaceBeforeParens: ControlStatements
+# Control of individual space before parentheses.
+SpaceBeforeRangeBasedForLoopColon: true
+# If true, spaces will be inserted into {}.
+SpaceInEmptyBlock: false
+# Pointer and reference alignment style.
+PointerAlignment: Left
+# The way to use tab characters in the resulting file.
+UseTab: Never
+...

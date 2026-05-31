@@ -34,7 +34,7 @@ new const HUD_SPRITE_KILL[] = "sprites/test_nextclient/hud_sprites/kill.spr"
 new const HUD_SPRITE_BLACK_HOLE[] = "sprites/test_nextclient/hud_sprites/ef_blackhole_loop.spr"
 
 public plugin_init() {
-    register_plugin("Test NCL API", "1.3.0", "Nordic Warrior");
+    register_plugin("Test NCL API", "1.6.0", "Nordic Warrior & Next21 Team");
 
     // Cmds for testing natives
     // look at next_client_api.inc
@@ -51,6 +51,8 @@ public plugin_init() {
     register_concmd("ncl_invert_mouse",              "cmd_ncl_invert_mouse",             ADMIN_ALL);
     register_concmd("ncl_hudsprite_set",             "cmd_ncl_hudsprite_set",            ADMIN_ALL); // ncl_send_hud_sprite(), ncl_send_hud_sprite_full_screen()
     register_concmd("ncl_hudsprite_clear",           "cmd_ncl_hudsprite_clear",          ADMIN_ALL); // ncl_clear_hud_sprite()
+    register_concmd("ncl_test_override_weapon_sound","cmd_ncl_test_override_weapon_sound",ADMIN_ALL); // ncl_override_weapon_sound()
+    register_concmd("ncl_test_override_weapon_sound_clear","cmd_ncl_test_override_weapon_sound_clear",ADMIN_ALL); // ncl_override_weapon_sound_clear()
 
     // Other cmds
     // For ncl_test_sandbox_cvars() if AUTO_RESTORE_CVAR_VALUES is disabled
@@ -157,7 +159,7 @@ public cmd_ncl_get_supported_features(id) {
     log_to_file(LOG_FILE, "NATIVE <ncl_get_supported_features> testing called for player: %n", id);
 
     new eFeaturesFlags:bitsum = ncl_get_supported_features(id);
-    new result[256];
+    new result[512];
 
     if (bitsum & NCL_FEATURE_CVARS_SANDBOX) {
         add(result, charsmax(result), "NCL_FEATURE_CVARS_SANDBOX");
@@ -216,6 +218,24 @@ public cmd_ncl_get_supported_features(id) {
     if (bitsum & NCL_FEATURE_DEATHMSG_WPN_ICON) {
         add(result, charsmax(result), "NCL_FEATURE_DEATHMSG_WPN_ICON");
         bitsum &= ~NCL_FEATURE_DEATHMSG_WPN_ICON;
+
+        if (bitsum > any:0) {
+            add(result, charsmax(result), " | ");
+        }
+    }
+
+    if (bitsum & NCL_FEATURE_WEAPON_SOUND_OVERRIDE) {
+        add(result, charsmax(result), "NCL_FEATURE_WEAPON_SOUND_OVERRIDE");
+        bitsum &= ~NCL_FEATURE_WEAPON_SOUND_OVERRIDE;
+
+        if (bitsum > any:0) {
+            add(result, charsmax(result), " | ");
+        }
+    }
+
+    if (bitsum & FEATURE_INVERT_MOUSE) {
+        add(result, charsmax(result), "FEATURE_INVERT_MOUSE");
+        bitsum &= ~FEATURE_INVERT_MOUSE;
 
         if (bitsum > any:0) {
             add(result, charsmax(result), " | ");
@@ -418,10 +438,10 @@ public cmd_ncl_test_viewmodelfx_render(id) {
     log_to_file(LOG_FILE, "* You should manually check the glowing of view model.");
 
     ncl_viewmodelfx_begin(id);
-    ncl_write_renderfx(kRenderFxGlowShell);
-    ncl_write_rendercolor(255, 0, 0);
-    ncl_write_rendermode(kRenderNormal);
-    ncl_write_renderamt(10);
+    ncl_write_renderfx(kRenderFxNone);
+    ncl_write_rendercolor(0, 0, 0);
+    ncl_write_rendermode(kRenderTransAlpha);
+    ncl_write_renderamt(128);
     ncl_viewmodelfx_end();
 
     return PLUGIN_HANDLED;
@@ -449,6 +469,77 @@ public cmd_ncl_restore_viewmodelfx(id) {
     ncl_write_renderskin(0);
     ncl_write_renderbody(0);
     ncl_viewmodelfx_end();
+
+    return PLUGIN_HANDLED;
+}
+
+/* <=======> */
+
+new const TEST_OVERRIDE_WEAPON_SOUND[] = "weapons/glock18-2.wav";
+new const TEST_OVERRIDE_WEAPON_SOUND_REPLACEMENT[] = "weapons/awp1.wav";
+new const TEST_OVERRIDE_WEAPON_NAME[] = "weapon_glock18";
+
+stock give_or_find_weapon(id, const weapon_name[]) {
+    new ent = rg_give_item(id, weapon_name);
+    if (ent > 0)
+        return ent;
+
+    new search_ent;
+    while ((search_ent = engfunc(EngFunc_FindEntityByString, search_ent, "classname", weapon_name)) > 0) {
+        if (get_entvar(search_ent, var_owner) == id)
+            return search_ent;
+    }
+
+    return -1;
+}
+
+public cmd_ncl_test_override_weapon_sound(id) {
+    if (id == 0) {
+        id = find_player_ex(FindPlayer_MatchUserId, read_argv_int(1));
+
+        if (id == 0) {
+            log_amx("Player with userid #%i not found.", read_argv_int(1));
+            return PLUGIN_HANDLED;
+        }
+    }
+
+    new weapon_ent = give_or_find_weapon(id, TEST_OVERRIDE_WEAPON_NAME);
+    if (weapon_ent <= 0) {
+        log_to_file(LOG_FILE, "[ERROR] <ncl_override_weapon_sound> Failed to give or find %s for player: %n", TEST_OVERRIDE_WEAPON_NAME, id);
+        return PLUGIN_HANDLED;
+    }
+
+    engclient_cmd(id, TEST_OVERRIDE_WEAPON_NAME);
+
+    log_to_file(LOG_FILE, "NATIVE <ncl_override_weapon_sound> testing called for player: %n", id);
+    log_to_file(LOG_FILE, "* You should manually check a sound changing of glock18 shot.");
+    log_to_file(LOG_FILE, "* Original: %s -> Replacement: %s. Weapon ent: %d", TEST_OVERRIDE_WEAPON_SOUND, TEST_OVERRIDE_WEAPON_SOUND_REPLACEMENT, weapon_ent);
+
+    ncl_override_weapon_sound(weapon_ent, TEST_OVERRIDE_WEAPON_SOUND, TEST_OVERRIDE_WEAPON_SOUND_REPLACEMENT);
+
+    return PLUGIN_HANDLED;
+}
+
+public cmd_ncl_test_override_weapon_sound_clear(id) {
+    if (id == 0) {
+        id = find_player_ex(FindPlayer_MatchUserId, read_argv_int(1));
+
+        if (id == 0) {
+            log_amx("Player with userid #%i not found.", read_argv_int(1));
+            return PLUGIN_HANDLED;
+        }
+    }
+
+    new weapon_ent = give_or_find_weapon(id, TEST_OVERRIDE_WEAPON_NAME);
+    if (weapon_ent <= 0) {
+        log_to_file(LOG_FILE, "[ERROR] <ncl_override_weapon_sound_clear> Failed to find %s for player: %n", TEST_OVERRIDE_WEAPON_NAME, id);
+        return PLUGIN_HANDLED;
+    }
+
+    log_to_file(LOG_FILE, "NATIVE <ncl_override_weapon_sound_clear> testing called for player: %n", id);
+    log_to_file(LOG_FILE, "* Clearing sound override for %s (ent: %d)", TEST_OVERRIDE_WEAPON_NAME, weapon_ent);
+
+    ncl_override_weapon_sound_clear(weapon_ent);
 
     return PLUGIN_HANDLED;
 }

@@ -1,11 +1,20 @@
 #include "ViewmodelFX.h"
-#include <easylogging++.h>
-#include "utils/utilfuncs.h"
 
-ViewmodelFX::ViewmodelFX(GameEventsManager& game_events_manager) :
-    game_events_manager_(game_events_manager)
+#include <easylogging++.h>
+
+#include <core/type_conversion.h>
+#include <metamod/engine.h>
+
+#include "utils/msg_ex.h"
+
+using namespace core;
+using namespace metamod;
+using namespace msg_ex;
+
+ViewmodelFX::ViewmodelFX(ServerEventsManager& server_events_manager) :
+    server_events_manager_(server_events_manager)
 {
-    game_events_manager_.on_server_activated().connect(&ViewmodelFX::ServerActivatedHandler, this);
+    server_events_manager_.on_server_activated().connect(&ViewmodelFX::ServerActivatedHandler, this);
 }
 
 void ViewmodelFX::WriteRenderMode(int rendermode)
@@ -22,7 +31,7 @@ void ViewmodelFX::WriteRenderMode(int rendermode)
     }
     else
     {
-        stateVFX_.rendermode = rendermode;
+        vfx_state_.rendermode = rendermode;
         StateSet(VFX::VMFX_RENDERMODE);
     }
 }
@@ -41,7 +50,7 @@ void ViewmodelFX::WriteRenderAmt(int renderamt)
     }
     else
     {
-        stateVFX_.renderamt = renderamt;
+        vfx_state_.renderamt = renderamt;
         StateSet(VFX::VMFX_RENDERAMT);
     }
 }
@@ -60,10 +69,10 @@ void ViewmodelFX::WriteRenderColor(int r, int g, int b)
     }
     else
     {
-        auto color = &stateVFX_.rendercolor;
-        color->r = r;
-        color->g = g;
-        color->b = b;
+        cssdk::Color24* color = &vfx_state_.rendercolor;
+        color->red = r;
+        color->green = g;
+        color->blue = b;
         StateSet(VFX::VMFX_RENDERCOLOR);
     }
 }
@@ -82,7 +91,7 @@ void ViewmodelFX::WriteRenderFX(int renderfx)
     }
     else
     {
-        stateVFX_.renderfx = renderfx;
+        vfx_state_.renderfx = renderfx;
         StateSet(VFX::VMFX_RENDERFX);
     }
 }
@@ -101,7 +110,7 @@ void ViewmodelFX::WriteSkin(int skin)
     }
     else
     {
-        stateVFX_.skin = skin;
+        vfx_state_.skin = skin;
         StateSet(VFX::VMFX_SKIN);
     }
 }
@@ -120,7 +129,7 @@ void ViewmodelFX::WriteBody(int body)
     }
     else
     {
-        stateVFX_.body = body;
+        vfx_state_.body = body;
         StateSet(VFX::VMFX_BODY);
     }
 }
@@ -148,9 +157,9 @@ void ViewmodelFX::Begin(ClientId client)
         return;
     }
 
-    memset(&stateVFX_, 0, sizeof(VFXState));
+    memset(&vfx_state_, 0, sizeof(VFXState));
 
-    client_ = client;
+    client_id_ = client;
     bit_state_set_ = 0;
     bit_state_reset_ = 0;
     is_message_building_ = true;
@@ -164,43 +173,55 @@ void ViewmodelFX::End()
         return;
     }
 
-    MESSAGE_BEGIN(MSG_ONE, message_viewmodelFX_, nullptr, INDEXENT(client_));
+    MessageBegin(cssdk::MessageType::One, message_viewmodelFX_, nullptr, type_conversion::EdictByIndex(client_id_));
 
     if (bit_state_reset_)
+    {
         bit_state_set_ |= (1 << 6);
+    }
 
-    WRITE_BYTE(bit_state_set_);
+    WriteByte(bit_state_set_);
 
     if (bit_state_reset_)
-        WRITE_BYTE(bit_state_reset_);
+    {
+        WriteByte(bit_state_reset_);
+    }
 
     if (StateIsSet(VFX::VMFX_RENDERMODE) || StateIsSet(VFX::VMFX_RENDERFX))
-        WRITE_BYTE(stateVFX_.rendermode | (stateVFX_.renderfx << 3));
+    {
+        WriteByte(vfx_state_.rendermode | (vfx_state_.renderfx << 3));
+    }
 
     if (StateIsSet(VFX::VMFX_RENDERAMT))
-        WRITE_BYTE(stateVFX_.renderamt);
+    {
+        WriteByte(vfx_state_.renderamt);
+    }
 
     if (StateIsSet(VFX::VMFX_RENDERCOLOR))
     {
-        auto color = &stateVFX_.rendercolor;
+        cssdk::Color24* color = &vfx_state_.rendercolor;
 
-        WRITE_BYTE(color->r);
-        WRITE_BYTE(color->g);
-        WRITE_BYTE(color->b);
+        WriteByte(color->red);
+        WriteByte(color->green);
+        WriteByte(color->blue);
     }
 
     if (StateIsSet(VFX::VMFX_SKIN))
-        WRITE_BYTE(stateVFX_.skin);
+    {
+        WriteByte(vfx_state_.skin);
+    }
 
     if (StateIsSet(VFX::VMFX_BODY))
-        WRITE_LONG(stateVFX_.body);
+    {
+        WriteInt(vfx_state_.body);
+    }
 
-    MESSAGE_END();
+    engine::MessageEnd();
 
     is_message_building_ = false;
 }
 
 void ViewmodelFX::ServerActivatedHandler(ServerActivatedEvent event)
 {
-    message_viewmodelFX_ = utils::RegUserMsgSafe("ViewModelFx", -1);
+    message_viewmodelFX_ = RegUserMsgSafe("ViewModelFx", -1);
 }

@@ -1,14 +1,15 @@
 #pragma once
 #include <kangaru/kangaru.hpp>
 #include <sigslot/signal.hpp>
-#include "game_events/GameEventsManager.h"
+
+#include "server_events/ServerEventsManager.h"
 
 class HudSprite : public sigslot::observer
 {
     int message_hud_sprite_{};
 
 public:
-    explicit HudSprite(GameEventsManager& game_events_manager);
+    explicit HudSprite(ServerEventsManager& server_events_manager);
 
     void SendHudSprite(
         int client,
@@ -49,4 +50,5 @@ private:
     void ServerActivatedHandler(ServerActivatedEvent event);
 };
 
-struct HudSpriteService : kgr::single_service<HudSprite, kgr::dependency<GameEventsManagerService>> {};
+struct HudSpriteService : kgr::single_service<HudSprite, kgr::dependency<ServerEventsManagerService>>
+{};

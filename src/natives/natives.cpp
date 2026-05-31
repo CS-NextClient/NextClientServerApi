@@ -10,4 +10,5 @@ void AddNatives_All()
     AddNatives_HudSprite();
     AddNatives_Miscellaneous();
     AddNatives_Hwid();
+    AddNatives_WeaponSoundOverride();
 }

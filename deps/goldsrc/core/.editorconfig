@@ -1,0 +1,13 @@
+root = true
+
+[*]
+guidelines = 120
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+
+[*.{c++,cc,cpp,cppm,cxx,h,h++,hh,hpp,hxx,inl,ipp,ixx,tlh,tli}]
+charset = utf-8
+end_of_line = crlf
+trim_trailing_whitespace = true
+cpp_generate_documentation_comments = doxygen_slash_star

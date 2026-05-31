@@ -1,5 +1,6 @@
 #pragma once
 #include <kangaru/kangaru.hpp>
+
 #include "NextClientVersion.h"
 #include "module_types.h"
 
@@ -12,4 +13,5 @@ public:
     virtual int GetSupportedFeatures(ClientId client) = 0;
 };
 
-struct INextClientInfoService : kgr::abstract_service<INextClientInfo> {};
+struct INextClientInfoService : kgr::abstract_service<INextClientInfo>
+{};

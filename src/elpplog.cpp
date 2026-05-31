@@ -1,10 +1,16 @@
+#include "elpplog.h"
+
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 1024
 #include <magic_enum/magic_enum.hpp>
 #include <easylogging++.h>
-#include "rehlds_api_provider.h"
-#include "amxxmodule.h"
-#include "elpplog.h"
+
+#include <cssdk/public/rehlds.h>
+#include <amxx/api.h>
+#include <metamod/api.h>
+#include <metamod/engine.h>
+#include <core/rehlds_api.h>
+
 #include "AmxContextGuard.h"
 #include "utils/string_utils.h"
 
@@ -23,13 +29,13 @@ static void LogMessage(const char* format, ...)
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
-    if (g_RehldsApi->GetServerStatic()->IsLogActive())
+    if (core::rehlds_api::ServerStatic()->IsLogActive())
     {
-        ALERT(at_logged, "[" MODULE_LOGTAG "] %s\n", buffer);
+        metamod::engine::AlertMessage(cssdk::AlertType::Logged, "[%s] %s\n", amxx::MODULE_LOG_TAG, buffer);
     }
     else
     {
-        MF_PrintSrvConsole("[" MODULE_LOGTAG "] %s\n", buffer);
+        amxx::PrintConsole("[%s] %s\n", amxx::MODULE_LOG_TAG, buffer);
     }
 }
 
@@ -49,7 +55,7 @@ protected:
 
         if (level == el::Level::Error && g_CurrentAmx != nullptr)
         {
-            MF_LogError(g_CurrentAmx, AMX_ERR_NATIVE, "[ERROR] [%s] %s", func.c_str(), message.c_str());
+            amxx::LogError(g_CurrentAmx, AmxError::Native, "[ERROR] [%s] %s", func.c_str(), message.c_str());
             return;
         }
 

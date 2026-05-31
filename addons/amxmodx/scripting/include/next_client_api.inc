@@ -90,7 +90,9 @@ enum eFeaturesFlags (<<= 1) {
     NCL_FEATURE_VERIFICATION,
     NCL_FEATURE_HUD_SPRITE,
     NCL_FEATURE_HUD_SPRITE_RENDERMODE,
-    NCL_FEATURE_DEATHMSG_WPN_ICON
+    NCL_FEATURE_DEATHMSG_WPN_ICON,
+    NCL_FEATURE_WEAPON_SOUND_OVERRIDE,
+    FEATURE_INVERT_MOUSE
 }
 
 /**
@@ -483,3 +485,31 @@ native ncl_clear_hud_sprite(id, channel);
  * @error               If the parameters are invalid, an error is thrown.
  */
 native ncl_set_wpn_icon_for_next_deathmsg(const sprite_path[], frame = 0, rendermode = kRenderTransAdd, color[] = { 255, 255, 255 }, alpha = 255, recipient_id = 0);
+
+/**
+ * Overrides a sound of the specified weapon entity.
+ * The override is bound to the weapon entity and synchronized to every NextClient
+ * client that can see the weapon: when such a client would play the original sound
+ * for this weapon, the replacement sound is played instead.
+ *
+ * @note The replacement sound is not precached on the server: the client hot-precaches it on demand when the override is applied, so no scarce server precache slot is consumed.
+ *       Make sure the file is available on the client beforehand - either it is a default game sound, or it is delivered to clients via ncl_upload_file (which does not use a server precache slot).
+ *       This avoids a missing sound and reduces potential client hitches/freezes when the sound is first loaded at play time.
+ * @note weapon_id must reference a valid weapon entity (classname starting with "weapon_").
+ *
+ * @param weapon_id     Weapon entity index (entnum) whose sound will be overridden
+ * @param original      Original sound path (e.g. "weapons/glock18-1.wav")
+ * @param replacement   Replacement sound path (e.g. "weapons/test_nextclient/glock18-1.wav")
+ *
+ * @return              1 on success, 0 if the weapon entity is invalid
+ */
+native ncl_override_weapon_sound(weapon_id, const original[], const replacement[]);
+
+/**
+ * Clears all sound overrides previously set for the specified weapon entity.
+ *
+ * @param weapon_id     Weapon entity index (entnum)
+ *
+ * @return              1 on success, 0 if the weapon entity is invalid
+ */
+native ncl_override_weapon_sound_clear(weapon_id);
