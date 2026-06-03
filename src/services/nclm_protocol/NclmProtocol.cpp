@@ -11,24 +11,6 @@
 
 using namespace core;
 
-namespace
-{
-    bool IsValidHwidFormat(const std::string& hwid)
-    {
-        if (hwid.size() != NCLM_HWID_SIZE)
-        {
-            return false;
-        }
-
-        for (const char c : hwid)
-        {
-            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
-                return false;
-        }
-        return true;
-    }
-} // namespace
-
 NclmProtocol::NclmProtocol(ServerEventsManager& server_events_manager)
 {
     if (instance_)
@@ -62,7 +44,7 @@ sigslot::signal<HwidReceivedEvent>& NclmProtocol::on_hwid_received()
     return on_hwid_received_;
 }
 
-void NclmProtocol::NclMessageHandler(ClientId client, NCLM_C2S opcode)
+void NclmProtocol::NclMessageHandler(ClientId client, NCLM_C2S opcode, int32_t payload_size)
 {
     switch (opcode)
     {
@@ -79,7 +61,7 @@ void NclmProtocol::NclMessageHandler(ClientId client, NCLM_C2S opcode)
             break;
 
         case NCLM_C2S::HARDWARE_ID:
-            HardwareIdHandler(client);
+            HardwareIdHandler(client, payload_size);
             break;
     }
 }
@@ -161,30 +143,67 @@ void NclmProtocol::DeclareVersionHandler(ClientId client)
     on_client_auth_(ClientAuthEvent{client, client_version, false});
 }
 
-void NclmProtocol::HardwareIdHandler(ClientId client)
+void NclmProtocol::HardwareIdHandler(ClientId client, int32_t payload_size)
 {
-    std::string hwid = rehlds_api::Funcs()->msg_read_string();
+    const char* name = amxx::GetPlayerName(client);
+
+    auto it = player_data_.find(client);
+    if (it == player_data_.end())
+    {
+        return;
+    }
+
+    const VerificationPayload& verification_payload = it->second;
+
+    if (payload_size <= 0)
+    {
+        LOG(WARNING) << "Empty HWID payload from " << name;
+        on_hwid_received_(HwidReceivedEvent{client, std::string{}, false});
+        return;
+    }
+
+    if (payload_size != static_cast<int32_t>(NCLM_HWID_SIGNATURE_SIZE))
+    {
+        LOG(WARNING) << "Unexpected HWID payload size (" << payload_size << ") from " << name;
+        on_hwid_received_(HwidReceivedEvent{client, std::string{}, false});
+        return;
+    }
+
+    std::vector<uint8_t> signature(NCLM_HWID_SIGNATURE_SIZE, 0x00);
+    rehlds_api::Funcs()->msg_read_buf(static_cast<int>(signature.size()), signature.data());
 
     if (*rehlds_api::Funcs()->get_msg_bad_read())
     {
-        LOG(ERROR) << "hwid: badread on " << amxx::GetPlayerName(client);
+        LOG(ERROR) << "Badread on HWID from " << name;
         return;
     }
 
-    if (!IsValidHwidFormat(hwid))
+    if (verification_payload.payload.empty())
     {
-        LOG(WARNING) << "hwid: invalid format from " << amxx::GetPlayerName(client) << " (len=" << hwid.size() << ")";
+        LOG(WARNING) << "No HWID verification nonce available for " << name;
+        on_hwid_received_(HwidReceivedEvent{client, std::string{}, false});
         return;
     }
 
-    for (char& c : hwid)
+    std::string hwid;
+    bool valid = verifier_.TryRecoverHwid(
+        client,
+        verification_payload.preferred_RSA_key_version,
+        signature,
+        verification_payload.payload,
+        hwid
+    );
+
+    if (!valid)
     {
-        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+        LOG(WARNING) << "HWID validation failed for " << name;
+        on_hwid_received_(HwidReceivedEvent{client, std::string{}, false});
+        return;
     }
 
-    LOG(INFO) << "hwid: received from " << amxx::GetPlayerName(client) << " [" << hwid << "]";
+    LOG(DEBUG) << "HWID received from " << name << " [" << hwid << "]";
 
-    on_hwid_received_(HwidReceivedEvent{client, hwid});
+    on_hwid_received_(HwidReceivedEvent{client, hwid, true});
 }
 
 void NclmProtocol::ClientMessageHandler(cssdk::ReHookHandleNetCommand* hookchain, cssdk::IGameClient* client, cssdk::uint8 opcode)
@@ -226,9 +245,10 @@ void NclmProtocol::ClientMessageHandler(cssdk::ReHookHandleNetCommand* hookchain
 
         // the actual message size includes the message size and the opcode,
         // we must subtract them because we read them earlier
-        int32_t full_message_size = *rehlds_api::Funcs()->get_msg_read_count() + nclm_message_size - sizeof(int32_t) - sizeof(uint8_t);
+        int32_t payload_size = nclm_message_size - static_cast<int32_t>(sizeof(int32_t)) - static_cast<int32_t>(sizeof(uint8_t));
+        int32_t full_message_size = *rehlds_api::Funcs()->get_msg_read_count() + payload_size;
 
-        NclMessageHandler(client_id, nclm_opcode);
+        NclMessageHandler(client_id, nclm_opcode, payload_size);
 
         int32_t* read_count_ptr = rehlds_api::Funcs()->get_msg_read_count();
         if (*read_count_ptr < full_message_size)
@@ -246,7 +266,7 @@ void NclmProtocol::ClientMessageHandler(cssdk::ReHookHandleNetCommand* hookchain
             return;
         }
 
-        NclMessageHandler(client_id, nclm_opcode);
+        NclMessageHandler(client_id, nclm_opcode, -1);
     }
 }
 

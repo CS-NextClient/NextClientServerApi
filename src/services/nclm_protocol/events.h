@@ -12,5 +12,6 @@ struct ClientAuthEvent
 struct HwidReceivedEvent
 {
     ClientId client_id;
-    std::string hwid; // 64-char hex SHA-256
+    std::string hwid;
+    bool valid;
 };

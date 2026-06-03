@@ -33,11 +33,11 @@ public:
     sigslot::signal<HwidReceivedEvent>& on_hwid_received();
 
 private:
-    void NclMessageHandler(ClientId client, NCLM_C2S opcode);
+    void NclMessageHandler(ClientId client, NCLM_C2S opcode, int32_t payload_size);
     void VerificationRequestHandler(ClientId client);
     void VerificationChallengeHandler(ClientId client);
     void DeclareVersionHandler(ClientId client);
-    void HardwareIdHandler(ClientId client);
+    void HardwareIdHandler(ClientId client, int32_t payload_size);
     void ClientMessageHandler(cssdk::ReHookHandleNetCommand* hookchain, cssdk::IGameClient* client, cssdk::uint8 opcode);
     void ServerActivatedHandler(ServerActivatedEvent event);
     void SendServerInfoHandler(ClientId);

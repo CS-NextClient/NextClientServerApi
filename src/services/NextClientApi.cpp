@@ -1,10 +1,10 @@
 #include "NextClientApi.h"
 
+#include <easylogging++.h>
+
 #include <amxx/api.h>
 #include <metamod/engine.h>
 #include <core/type_conversion.h>
-
-#include <easylogging++.h>
 
 using namespace core;
 using namespace metamod;
@@ -232,19 +232,34 @@ void NextClientApi::HwidReceivedHandler(HwidReceivedEvent event)
 
     if (!player.is_verified)
     {
-        LOG(WARNING) << "hwid: received from non-verified client " << amxx::GetPlayerName(event.client_id) << " — ignored";
+        LOG(WARNING) << "HWID from non-verified client " << amxx::GetPlayerName(event.client_id) << ", ignored";
+        return;
+    }
+
+    if (!event.valid)
+    {
         return;
     }
 
     if (!player.hwid.empty())
     {
-        LOG(WARNING) << "hwid: duplicate from " << amxx::GetPlayerName(event.client_id) << " — ignored";
+        LOG(WARNING) << "Duplicate HWID from " << amxx::GetPlayerName(event.client_id) << ", ignored";
         return;
+    }
+
+    for (const auto& [other_id, other] : players_)
+    {
+        if (other_id != event.client_id && other.hwid == event.hwid)
+        {
+            LOG(WARNING) << "HWID of " << amxx::GetPlayerName(event.client_id) << " matches "
+                         << amxx::GetPlayerName(other_id) << " [" << event.hwid << "]";
+            break;
+        }
     }
 
     player.hwid = event.hwid;
 
-    LOG(INFO) << "hwid: stored for " << amxx::GetPlayerName(event.client_id) << " [" << player.hwid << "]";
+    LOG(INFO) << "HWID stored for " << amxx::GetPlayerName(event.client_id) << " [" << player.hwid << "]";
 
     amxx::ExecuteForward(forward_hwid_received_, event.client_id, player.hwid.c_str());
 }

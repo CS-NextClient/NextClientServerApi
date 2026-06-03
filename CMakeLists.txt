@@ -161,6 +161,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         #easyloggingpp options
         ELPP_THREAD_SAFE
         ELPP_DISABLE_DEFAULT_CRASH_HANDLING
+        $<$<NOT:$<CONFIG:Debug>>:ELPP_DISABLE_DEBUG_LOGS>
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

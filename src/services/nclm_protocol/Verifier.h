@@ -31,6 +31,14 @@ public:
         const VerificationPayload& verification_payload
     );
 
+    bool TryRecoverHwid(
+        ClientId client,
+        const std::string& rsa_key_version,
+        const std::vector<uint8_t>& signature,
+        const std::vector<uint8_t>& nonce,
+        std::string& hwid_out
+    );
+
     int ReloadPublicKeys();
 
 private:

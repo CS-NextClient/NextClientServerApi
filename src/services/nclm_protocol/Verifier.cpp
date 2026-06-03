@@ -1,15 +1,40 @@
 #include "Verifier.h"
 
+#include <cctype>
+
 #include <easylogging++.h>
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/sha.h>
 
 #include <amxx/api.h>
 
 #include "NclmProtocol.h"
+#include "utils/scope_exit.h"
 
 #undef read
+
+namespace
+{
+    bool IsHwidHex(const std::string& hwid)
+    {
+        if (hwid.size() != NCLM_HWID_SIZE)
+        {
+            return false;
+        }
+
+        for (const char c : hwid)
+        {
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+} // namespace
 
 Verifier::Verifier()
 {
@@ -49,11 +74,12 @@ bool Verifier::TryCreateVerificationPayload(
         return false;
     }
 
+    auto ctx_guard = utils::MakeScopeExit([ctx] { EVP_PKEY_CTX_free(ctx); });
+
     int res = EVP_PKEY_encrypt_init(ctx);
     if (res <= 0)
     {
         LOG(ERROR) << "Cannot initialize encrypt context (code " << res << ") on " << client_name;
-        EVP_PKEY_CTX_free(ctx);
         return false;
     }
 
@@ -61,7 +87,6 @@ bool Verifier::TryCreateVerificationPayload(
     if (res <= 0)
     {
         LOG(ERROR) << "Cannot generate random bytes (code " << res << ") on " << client_name;
-        EVP_PKEY_CTX_free(ctx);
         return false;
     }
 
@@ -70,7 +95,6 @@ bool Verifier::TryCreateVerificationPayload(
     if (res <= 0)
     {
         LOG(ERROR) << "Cannot perform encrypt operation (code " << res << ") on " << client_name;
-        EVP_PKEY_CTX_free(ctx);
         return false;
     }
 
@@ -78,7 +102,6 @@ bool Verifier::TryCreateVerificationPayload(
     {
         LOG(DEBUG) << "'" << rsa_key_version << "' key length does not match (" << out_len << ", but need "
                    << NCLM_VERIF_ENCRYPTED_PAYLOAD_SIZE << ") on " << client_name;
-        EVP_PKEY_CTX_free(ctx);
         return false;
     }
 
@@ -92,11 +115,9 @@ bool Verifier::TryCreateVerificationPayload(
     if (res <= 0)
     {
         LOG(ERROR) << "Cannot perform encrypt operation 2 (code " << res << ")" << " on " << client_name;
-        EVP_PKEY_CTX_free(ctx);
         return false;
     }
 
-    EVP_PKEY_CTX_free(ctx);
     return true;
 }
 
@@ -115,6 +136,90 @@ bool Verifier::ValidateReceivedPayload(
         return false;
     }
 
+    return true;
+}
+
+bool Verifier::TryRecoverHwid(
+    ClientId client,
+    const std::string& rsa_key_version,
+    const std::vector<uint8_t>& signature,
+    const std::vector<uint8_t>& nonce,
+    std::string& hwid_out
+)
+{
+    const char* name = amxx::GetPlayerName(client);
+
+    auto it = cached_pkeys_.find(rsa_key_version);
+    if (it == cached_pkeys_.end())
+    {
+        LOG(ERROR) << "Unknown HWID key version (" << rsa_key_version << ") on " << name;
+        return false;
+    }
+
+    if (signature.size() != NCLM_HWID_SIGNATURE_SIZE || nonce.empty())
+    {
+        LOG(WARNING) << "Bad HWID signature/nonce size on " << name;
+        return false;
+    }
+
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(it->second, nullptr);
+    if (ctx == nullptr)
+    {
+        LOG(ERROR) << "Cannot create HWID verify context on " << name;
+        return false;
+    }
+
+    auto ctx_guard = utils::MakeScopeExit([ctx] { EVP_PKEY_CTX_free(ctx); });
+
+    if (EVP_PKEY_verify_recover_init(ctx) <= 0)
+    {
+        LOG(ERROR) << "Cannot init HWID verify_recover on " << name;
+        return false;
+    }
+
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
+    {
+        LOG(ERROR) << "Cannot set HWID rsa padding on " << name;
+        return false;
+    }
+
+    uint8_t recovered[NCLM_HWID_SIGNATURE_SIZE];
+    size_t recovered_len = sizeof(recovered);
+    if (EVP_PKEY_verify_recover(ctx, recovered, &recovered_len, signature.data(), signature.size()) <= 0)
+    {
+        LOG(WARNING) << "HWID signature recovery failed on " << name;
+        return false;
+    }
+
+    if (recovered_len != NCLM_HWID_SIGNED_MESSAGE_SIZE)
+    {
+        LOG(WARNING) << "HWID recovered length mismatch (" << recovered_len << ") on " << name;
+        return false;
+    }
+
+    // Verify the nonce binding: recovered[NCLM_HWID_SIZE..] == SHA-256(nonce).
+    uint8_t nonce_digest[SHA256_DIGEST_LENGTH];
+    SHA256(nonce.data(), nonce.size(), nonce_digest);
+
+    if (CRYPTO_memcmp(recovered + NCLM_HWID_SIZE, nonce_digest, NCLM_HWID_NONCE_BINDING_SIZE) != 0)
+    {
+        LOG(WARNING) << "HWID nonce binding mismatch on " << name;
+        return false;
+    }
+
+    std::string hwid(reinterpret_cast<const char*>(recovered), NCLM_HWID_SIZE);
+    for (char& c : hwid)
+    {
+        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+    }
+
+    if (!IsHwidHex(hwid))
+    {
+        LOG(WARNING) << "Recovered HWID value is not valid hex on " << name;
+        return false;
+    }
+
+    hwid_out = std::move(hwid);
     return true;
 }
 
