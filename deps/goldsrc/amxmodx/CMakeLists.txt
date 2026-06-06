@@ -39,7 +39,7 @@
 #-------------------------------------------------------------------------------------------
 
 # Minimum required version of CMake for a project
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 
 # Declare project
 project("amxx")
