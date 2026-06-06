@@ -1,6 +1,8 @@
 name: Build Windows
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       build_type:
@@ -11,6 +13,10 @@ on:
         options:
           - Release
           - Debug
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -31,7 +37,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{ inputs.build_type }}
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }}
 
       - name: Build
         run: |
@@ -41,6 +47,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nextclientapi_amxx-windows-${{ inputs.build_type }}
+          name: nextclientapi_amxx-windows-${{ inputs.build_type || 'Release' }}
           path: build/nextclientapi_amxx.dll
           if-no-files-found: error

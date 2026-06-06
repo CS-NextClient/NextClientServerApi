@@ -1,6 +1,8 @@
 name: Build Linux
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       build_type:
@@ -11,6 +13,10 @@ on:
         options:
           - Release
           - Debug
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -52,13 +58,13 @@ jobs:
             # Build
             mkdir -p build
             cd build
-            cmake .. -DCMAKE_BUILD_TYPE=${{ inputs.build_type }}
+            cmake .. -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }}
             cmake --build . --target nextclientapi_amxx -j$(nproc)
           '
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nextclientapi_amxx-linux-${{ inputs.build_type }}
+          name: nextclientapi_amxx-linux-${{ inputs.build_type || 'Release' }}
           path: build/nextclientapi_amxx_i386.so
           if-no-files-found: error
