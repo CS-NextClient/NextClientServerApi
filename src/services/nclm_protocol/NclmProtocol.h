@@ -43,6 +43,7 @@ private:
     void SendServerInfoHandler(ClientId);
     void ClientDropConnectionHandler(ClientDropConnectionEvent event);
 
+    void SendServerHello(ClientId client);
     void SendVerificationPayload(ClientId client, const std::vector<uint8_t>& payload);
 
     cssdk::SizeBuf* GetClientReliableChannel(ClientId client);

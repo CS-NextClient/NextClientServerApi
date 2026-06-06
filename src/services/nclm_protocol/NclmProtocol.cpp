@@ -186,13 +186,8 @@ void NclmProtocol::HardwareIdHandler(ClientId client, int32_t payload_size)
     }
 
     std::string hwid;
-    bool valid = verifier_.TryRecoverHwid(
-        client,
-        verification_payload.preferred_RSA_key_version,
-        signature,
-        verification_payload.payload,
-        hwid
-    );
+    bool valid =
+        verifier_.TryRecoverHwid(client, verification_payload.preferred_RSA_key_version, signature, verification_payload.payload, hwid);
 
     if (!valid)
     {
@@ -293,6 +288,7 @@ void NclmProtocol::SendServerInfoHandler(ClientId client)
 
     if (!payload.empty())
     {
+        SendServerHello(client);
         SendVerificationPayload(client, payload);
         payload.clear();
     }
@@ -307,6 +303,17 @@ void NclmProtocol::ClientDropConnectionHandler(ClientDropConnectionEvent event)
     }
 
     it->second.payload.clear();
+}
+
+void NclmProtocol::SendServerHello(ClientId client)
+{
+    cssdk::SizeBuf* channel = GetClientReliableChannel(client);
+    if (channel == nullptr)
+    {
+        return;
+    }
+
+    NclmSizeBufWriter(channel, 0x140).WriteByte(static_cast<int>(NCLM_S2C::SERVER_HELLO)).WriteString(amxx::MODULE_VERSION).Send();
 }
 
 void NclmProtocol::SendVerificationPayload(ClientId client, const std::vector<uint8_t>& payload)
