@@ -42,10 +42,13 @@ PlayerEntitySync::PlayerEntitySync(ServerEventsManager& server_events_manager, E
 {
     server_events_manager_.on_server_activated().connect(&PlayerEntitySync::ServerActivatedHandler, this);
     server_events_manager_.on_client_connecting().connect(&PlayerEntitySync::ClientConnectingHandler, this);
+    server_events_manager_.on_client_disconnected().connect(&PlayerEntitySync::ClientDisconnectedHandler, this);
 }
 
 void PlayerEntitySync::ServerActivatedHandler(ServerActivatedEvent event)
 {
+    player_entities_.clear();
+
     EntityTypeDescriptor player_type;
     player_type.type_id = static_cast<uint8_t>(EntityTypeId::Player);
     player_type.fields = {
@@ -64,5 +67,31 @@ void PlayerEntitySync::ClientConnectingHandler(ClientConnectingEvent event)
         return;
     }
 
-    entity_sync_.Create(static_cast<uint8_t>(EntityTypeId::Player), player_edict, {}, VisibilityReference::BindEdictPAS(player_edict));
+    auto it = player_entities_.find(event.client_id);
+    if (it != player_entities_.end() && entity_sync_.Exists(it->second))
+    {
+        return;
+    }
+
+    uint16_t entity_id =
+        entity_sync_.Create(static_cast<uint8_t>(EntityTypeId::Player), player_edict, {}, VisibilityReference::BindEdictPAS(player_edict));
+
+    if (entity_id == 0)
+    {
+        return;
+    }
+
+    player_entities_[event.client_id] = entity_id;
+}
+
+void PlayerEntitySync::ClientDisconnectedHandler(ClientId client)
+{
+    auto it = player_entities_.find(client);
+    if (it == player_entities_.end())
+    {
+        return;
+    }
+
+    entity_sync_.Destroy(it->second);
+    player_entities_.erase(it);
 }

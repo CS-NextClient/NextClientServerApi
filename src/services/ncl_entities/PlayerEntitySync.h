@@ -10,12 +10,15 @@ class PlayerEntitySync : public sigslot::observer
     ServerEventsManager& server_events_manager_;
     EntitySync& entity_sync_;
 
+    std::unordered_map<ClientId, uint16_t> player_entities_;
+
 public:
     explicit PlayerEntitySync(ServerEventsManager& server_events_manager, EntitySync& entity_sync);
 
 private:
     void ServerActivatedHandler(ServerActivatedEvent event);
     void ClientConnectingHandler(ClientConnectingEvent event);
+    void ClientDisconnectedHandler(ClientId client);
 };
 
 struct PlayerNclEntitySyncService : kgr::single_service<PlayerEntitySync, kgr::dependency<ServerEventsManagerService, EntitySyncService>>
