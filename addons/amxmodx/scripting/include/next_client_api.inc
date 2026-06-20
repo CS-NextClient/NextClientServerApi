@@ -96,13 +96,36 @@ enum eFeaturesFlags (<<= 1) {
 }
 
 /**
- * Called when all api functionality is ready to use. Called only for Next Clients.
+ * Called once, when all api functionality is ready to use. Called only for Next Clients.
+ *
+ * At the moment this forward is called the client's NCLM negotiation is already complete:
+ * the verification result is final (see ncl_is_using_nextclient) and, for verified players,
+ * the HWID has already been received (see ncl_get_client_hwid). The whole identification state is
+ * settled and available here, so it can be used directly without waiting for any other event.
  *
  * @param id    Client index
  *
  * @noreturn
  */
 forward ncl_client_api_ready(id);
+
+/**
+ * Called when a verified player's hardware id (HWID) has been received and validated.
+ * Called once per connection and only for verified players (see ncl_is_using_nextclient).
+ *
+ * Client state at the moment of this call: the HWID arrives during the connection handshake, so
+ * this forward fires BEFORE ncl_client_api_ready and before the player has fully entered the game.
+ * The API is not ready yet (ncl_is_client_api_ready returns false), and functions that send data to
+ * the client - sandbox cvars, viewmodelfx, hud sprites, fov, etc. - will NOT work here. Use this
+ * forward only for early HWID-based logic (logging, bans, kicks). For anything that sends data to the
+ * client, use ncl_client_api_ready, where the HWID is already available as well.
+ *
+ * @param id    Client index
+ * @param hwid  Player's HWID, a NCL_HWID_LENGTH-character lowercase hex string (SHA-256)
+ *
+ * @noreturn
+ */
+forward ncl_hwid_received(id, const hwid[]);
 
 /**
  * Checks if client is Next Client and its ready to interact with server api.
@@ -165,6 +188,36 @@ native bool:ncl_get_nextclient_version(id, &major = 0, &minor = 0, &patch = 0);
  * @return          Member of eFeaturesFlags enum
  */
 native eFeaturesFlags:ncl_get_supported_features(id);
+
+/**
+ * Length of a HWID string, without the null terminator (HWID is a SHA-256 hex digest).
+ * Use a buffer of at least NCL_HWID_LENGTH + 1 to receive it.
+ */
+#define NCL_HWID_LENGTH 64
+
+/**
+ * Gets the hardware id (HWID) of a verified player.
+ *
+ * @note HWID is available only for verified players. It is delivered via the ncl_hwid_received()
+ *       forward (during the connection handshake) and is also already final inside
+ *       ncl_client_api_ready(); ncl_is_hwid_received() can be used to poll it.
+ *
+ * @param id    Client index
+ * @param hwid  Buffer that receives the HWID (a NCL_HWID_LENGTH-character lowercase hex string)
+ * @param len   Buffer size (NCL_HWID_LENGTH + 1 is recommended)
+ *
+ * @return      True if the HWID is available and was written, false otherwise
+ */
+native bool:ncl_get_client_hwid(id, hwid[], len);
+
+/**
+ * Checks whether the hardware id (HWID) of a player has been received.
+ *
+ * @param id    Client index
+ *
+ * @return      True if the HWID has been received, false otherwise
+ */
+native bool:ncl_is_hwid_received(id);
 
 /**
  * Marks the beginning of a sandbox cvar message.

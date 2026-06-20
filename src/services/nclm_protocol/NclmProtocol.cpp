@@ -24,6 +24,7 @@ NclmProtocol::NclmProtocol(ServerEventsManager& server_events_manager)
 
     server_events_manager.on_send_server_info().connect(&NclmProtocol::SendServerInfoHandler, this);
     server_events_manager.on_server_activated().connect(&NclmProtocol::ServerActivatedHandler, this);
+    server_events_manager.on_client_connect_begin().connect(&NclmProtocol::ClientConnectBeginHandler, this);
     server_events_manager.on_client_drop_connection().connect(&NclmProtocol::ClientDropConnectionHandler, this);
 }
 
@@ -294,6 +295,11 @@ void NclmProtocol::SendServerInfoHandler(ClientId client)
     }
 }
 
+void NclmProtocol::ClientConnectBeginHandler(ClientId client)
+{
+    player_data_[client] = VerificationPayload{};
+}
+
 void NclmProtocol::ClientDropConnectionHandler(ClientDropConnectionEvent event)
 {
     auto it = player_data_.find(event.client_id);
@@ -302,7 +308,7 @@ void NclmProtocol::ClientDropConnectionHandler(ClientDropConnectionEvent event)
         return;
     }
 
-    it->second.payload.clear();
+    it->second = VerificationPayload{};
 }
 
 void NclmProtocol::SendServerHello(ClientId client)

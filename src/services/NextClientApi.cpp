@@ -15,6 +15,7 @@ NextClientApi::NextClientApi(ServerEventsManager& server_events_manager, NclmPro
 {
     server_events_manager_.on_server_activated().connect(&NextClientApi::ServerActivatedHandler, this);
     server_events_manager_.on_player_think_post().connect(&NextClientApi::PlayerPostThinkHandler, this);
+    server_events_manager_.on_client_connect_begin().connect(&NextClientApi::ClientConnectBeginHandler, this);
     server_events_manager_.on_client_connecting().connect(&NextClientApi::ClientConnectingHandler, this);
     server_events_manager_.on_client_drop_connection().connect(&NextClientApi::ClientDropConnectionHandler, this);
     nclm_protocol_.on_client_auth().connect(&NextClientApi::ClientAuthHandler, this);
@@ -189,19 +190,42 @@ void NextClientApi::ServerActivatedHandler(ServerActivatedEvent event)
     );
 }
 
-void NextClientApi::ClientAuthHandler(ClientAuthEvent event)
+void NextClientApi::LogClientConnected(ClientId client, const PlayerData& player)
 {
-    auto it = players_.find(event.client_id);
-    if (it == players_.end())
+    const char* name = amxx::GetPlayerName(client);
+
+    const char* auth_id = "";
+    if (cssdk::Edict* entity = type_conversion::EdictByIndex(client))
     {
-        PlayerData data{};
-        data.is_api_ready = false;
-        data.is_verified = false;
-        data.client_version = NextClientVersion{};
-        it = players_.emplace(event.client_id, data).first;
+        auth_id = engine::GetPlayerAuthId(entity);
     }
 
-    PlayerData& player = it->second;
+    const char* address = amxx::GetPlayerIp(client);
+    uint32_t connection_number = ++nextclient_connect_count_;
+
+    const char* state = "compatible";
+    if (player.is_verified)
+    {
+        state = "verified";
+    }
+    else if (player.deprecated_client_version != NextClientVersionLegacy::NOT_NEXTCLIENT)
+    {
+        state = "legacy";
+    }
+
+    LOG(INFO) << '"' << name
+              << '<' << connection_number << '>'
+              << '<' << auth_id << '>'
+              << '<' << player.hwid << '>'
+              << "\" connected, address \"" << address
+              << "\", version \"<" << player.client_version.major << '.' << player.client_version.minor << '.'
+              << player.client_version.patch << ">\""
+              << ", state \"<" << state << ">\"";
+}
+
+void NextClientApi::ClientAuthHandler(ClientAuthEvent event)
+{
+    PlayerData& player = players_[event.client_id];
     player.is_verified = event.is_verified;
     player.is_using_nextclient = true;
 
@@ -210,15 +234,6 @@ void NextClientApi::ClientAuthHandler(ClientAuthEvent event)
     if (!ParseVersion(event.client_version, player.client_version))
     {
         LOG(INFO) << name << " has a bogus version of NextClient (" << event.client_version << ")";
-    }
-
-    if (event.is_verified)
-    {
-        LOG(INFO) << "Verified user " << name << " has joined the game (" << event.client_version << ")!";
-    }
-    else
-    {
-        LOG(INFO) << "NextClient compatible user " << name << " has joined the game (" << event.client_version << ")!";
     }
 }
 
@@ -259,8 +274,6 @@ void NextClientApi::HwidReceivedHandler(HwidReceivedEvent event)
 
     player.hwid = event.hwid;
 
-    LOG(INFO) << "HWID stored for " << amxx::GetPlayerName(event.client_id) << " [" << player.hwid << "]";
-
     amxx::ExecuteForward(forward_hwid_received_, event.client_id, player.hwid.c_str());
 }
 
@@ -277,6 +290,17 @@ void NextClientApi::PlayerPostThinkHandler(ClientId client)
 
         amxx::ExecuteForward(forward_api_ready_, client);
     }
+
+    if (data.is_using_nextclient && !data.connection_logged)
+    {
+        data.connection_logged = true;
+        LogClientConnected(client, data);
+    }
+}
+
+void NextClientApi::ClientConnectBeginHandler(ClientId client)
+{
+    players_[client] = PlayerData{};
 }
 
 void NextClientApi::ClientConnectingHandler(ClientConnectingEvent event)

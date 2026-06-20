@@ -10,6 +10,7 @@ struct PlayerData
     bool is_using_nextclient{};
     bool is_api_ready{};
     bool is_verified{};
+    bool connection_logged{};
 
     std::string hwid{};
 };

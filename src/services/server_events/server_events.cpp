@@ -45,6 +45,18 @@ namespace sv_events
         ServerEventsManager::instance_->frame_();
     }
 
+    void ClientConnectedHandler(cssdk::ReHookClientConnected* hookchain, cssdk::IGameClient* client)
+    {
+        if (!ServerEventsManager::instance_)
+        {
+            hookchain->CallNext(client);
+            return;
+        }
+
+        ServerEventsManager::instance_->client_connect_begin_(client->GetId() + 1);
+        hookchain->CallNext(client);
+    }
+
     cssdk::qboolean ClientConnectPostMetamodHandler(cssdk::Edict* client, const char* name, const char* address, char* reject_reason)
     {
         cssdk::qboolean result = metamod::GetRetValue<cssdk::qboolean>();

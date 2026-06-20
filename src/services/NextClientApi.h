@@ -18,6 +18,7 @@ class NextClientApi : public sigslot::observer, public INextClientInfo
     std::unordered_map<ClientId, PlayerData> players_;
     int forward_api_ready_{};
     int forward_hwid_received_{};
+    uint32_t nextclient_connect_count_{};
 
     ServerEventsManager& server_events_manager_;
     NclmProtocol& nclm_protocol_;
@@ -35,11 +36,13 @@ public:
 
 private:
     bool ParseVersion(const std::string& in, NextClientVersion& out);
+    void LogClientConnected(ClientId client, const PlayerData& player);
 
     void ServerActivatedHandler(ServerActivatedEvent event);
     void ClientAuthHandler(ClientAuthEvent event);
     void HwidReceivedHandler(HwidReceivedEvent event);
     void PlayerPostThinkHandler(ClientId client);
+    void ClientConnectBeginHandler(ClientId client);
     void ClientConnectingHandler(ClientConnectingEvent event);
     void ClientDropConnectionHandler(ClientDropConnectionEvent event);
 };

@@ -26,6 +26,7 @@ ServerEventsManager::ServerEventsManager()
     metamod::engine::HookMessageEnd(MessageEndPostMetamodHandler, true);
     metamod::gamedll::HookServerActivate(ServerActivatePostMetamodHandler, true);
 
+    rehlds_api::HookChains()->ClientConnected()->RegisterHook(ClientConnectedHandler);
     rehlds_api::HookChains()->SvDropClient()->RegisterHook(SV_DropClientHandler);
     rehlds_api::HookChains()->SvSendServerInfo()->RegisterHook(SV_SendServerInfoHandler);
     rehlds_api::HookChains()->SvFrame()->RegisterHook(SV_FrameHandler);
@@ -58,11 +59,17 @@ ServerEventsManager::~ServerEventsManager()
         return;
     }
 
+    rehlds_api::HookChains()->ClientConnected()->UnregisterHook(ClientConnectedHandler);
     rehlds_api::HookChains()->SvDropClient()->UnregisterHook(SV_DropClientHandler);
     rehlds_api::HookChains()->SvSendServerInfo()->UnregisterHook(SV_SendServerInfoHandler);
     rehlds_api::HookChains()->SvFrame()->UnregisterHook(SV_FrameHandler);
 
     instance_ = nullptr;
+}
+
+sigslot::signal<ClientId>& ServerEventsManager::on_client_connect_begin() noexcept
+{
+    return client_connect_begin_;
 }
 
 sigslot::signal<ClientConnectingEvent>& ServerEventsManager::on_client_connecting() noexcept

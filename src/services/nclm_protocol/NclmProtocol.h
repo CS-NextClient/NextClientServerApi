@@ -41,6 +41,7 @@ private:
     void ClientMessageHandler(cssdk::ReHookHandleNetCommand* hookchain, cssdk::IGameClient* client, cssdk::uint8 opcode);
     void ServerActivatedHandler(ServerActivatedEvent event);
     void SendServerInfoHandler(ClientId);
+    void ClientConnectBeginHandler(ClientId client);
     void ClientDropConnectionHandler(ClientDropConnectionEvent event);
 
     void SendServerHello(ClientId client);

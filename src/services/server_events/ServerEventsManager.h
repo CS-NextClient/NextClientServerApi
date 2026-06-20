@@ -18,6 +18,7 @@ public:
     bool moved_ = false;
 
 private:
+    sigslot::signal<ClientId> client_connect_begin_;
     sigslot::signal<ClientConnectingEvent> client_connecting_;
     sigslot::signal<ClientId> client_putinserver_;
     sigslot::signal<ClientId> client_first_frame_;
@@ -43,6 +44,7 @@ public:
     ServerEventsManager(ServerEventsManager&& other) noexcept;
     ~ServerEventsManager();
 
+    sigslot::signal<ClientId>& on_client_connect_begin() noexcept;
     sigslot::signal<ClientConnectingEvent>& on_client_connecting() noexcept;
     sigslot::signal<ClientId>& on_client_putinserver() noexcept;
     sigslot::signal<ClientId>& on_client_first_frame() noexcept;
@@ -69,6 +71,7 @@ private:
     friend void sv_events::SV_DropClientHandler(cssdk::ReHookSvDropClient* hookchain,cssdk::IGameClient* client, bool crash, const char* buf);
     friend void sv_events::SV_SendServerInfoHandler(cssdk::ReHookSvSendServerInfo* hookchain, cssdk::SizeBuf* msg, cssdk::IGameClient* client);
     friend void sv_events::SV_FrameHandler(cssdk::ReHookSvFrame* hookchain);
+    friend void sv_events::ClientConnectedHandler(cssdk::ReHookClientConnected* hookchain, cssdk::IGameClient* client);
     friend cssdk::qboolean sv_events::ClientConnectPostMetamodHandler(cssdk::Edict* client, const char* name, const char* address, char* reject_reason);
     friend void sv_events::ClientDisconnectPostMetamodHandler(cssdk::Edict* client);
     friend void sv_events::ClientPutInServerPostMetamodHandler(cssdk::Edict* client);

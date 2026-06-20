@@ -53,6 +53,8 @@ public plugin_init() {
     register_concmd("ncl_hudsprite_clear",           "cmd_ncl_hudsprite_clear",          ADMIN_ALL); // ncl_clear_hud_sprite()
     register_concmd("ncl_test_override_weapon_sound","cmd_ncl_test_override_weapon_sound",ADMIN_ALL); // ncl_override_weapon_sound()
     register_concmd("ncl_test_override_weapon_sound_clear","cmd_ncl_test_override_weapon_sound_clear",ADMIN_ALL); // ncl_override_weapon_sound_clear()
+    register_concmd("ncl_get_client_hwid",           "cmd_ncl_get_client_hwid",          ADMIN_ALL);
+    register_concmd("ncl_is_hwid_received",           "cmd_ncl_is_hwid_received",         ADMIN_ALL);
 
     // Other cmds
     // For ncl_test_sandbox_cvars() if AUTO_RESTORE_CVAR_VALUES is disabled
@@ -64,11 +66,23 @@ public plugin_init() {
 /* <== FORWARDS ==> */
 
 public ncl_client_api_ready(id) {
-    log_to_file(LOG_FILE, "FORWARD <ncl_client_api_ready> called for player: %n", id);
+    new eNclUsing:using_state = ncl_is_using_nextclient(id);
+
+    new hwid[NCL_HWID_LENGTH + 1];
+    new bool:has_hwid = ncl_get_client_hwid(id, hwid, charsmax(hwid));
+
+    log_to_file(LOG_FILE, "FORWARD <ncl_client_api_ready> called for player: %n (using=%d, hwid_received=%s, hwid=%s)",
+        id, using_state, has_hwid ? "Yes" : "No", hwid);
 
     #if defined AUTOTESTS
     start_autotests(id);
     #endif
+
+    return PLUGIN_HANDLED;
+}
+
+public ncl_hwid_received(id, const hwid[]) {
+    log_to_file(LOG_FILE, "FORWARD <ncl_hwid_received> called for player: %n, hwid: %s", id, hwid);
 
     return PLUGIN_HANDLED;
 }
@@ -243,6 +257,44 @@ public cmd_ncl_get_supported_features(id) {
     }
 
     log_to_file(LOG_FILE, "Result: %s", result);
+    return PLUGIN_HANDLED;
+}
+
+/* <=======> */
+
+public cmd_ncl_get_client_hwid(id) {
+    if (id == 0) {
+        id = find_player_ex(FindPlayer_MatchUserId, read_argv_int(1));
+
+        if (id == 0) {
+            log_amx("Player with userid #%i not found.", read_argv_int(1));
+            return PLUGIN_HANDLED;
+        }
+    }
+
+    log_to_file(LOG_FILE, "NATIVE <ncl_get_client_hwid> testing called for player: %n", id);
+
+    new hwid[NCL_HWID_LENGTH + 1];
+    new bool:received = ncl_get_client_hwid(id, hwid, charsmax(hwid));
+
+    log_to_file(LOG_FILE, "Result: received? %s, hwid: %s", received ? "Yes" : "No", hwid);
+    return PLUGIN_HANDLED;
+}
+
+/* <=======> */
+
+public cmd_ncl_is_hwid_received(id) {
+    if (id == 0) {
+        id = find_player_ex(FindPlayer_MatchUserId, read_argv_int(1));
+
+        if (id == 0) {
+            log_amx("Player with userid #%i not found.", read_argv_int(1));
+            return PLUGIN_HANDLED;
+        }
+    }
+
+    log_to_file(LOG_FILE, "NATIVE <ncl_is_hwid_received> testing called for player: %n", id);
+    log_to_file(LOG_FILE, "Result: HWID received? %s.", ncl_is_hwid_received(id) ? "Yes" : "No");
     return PLUGIN_HANDLED;
 }
 
