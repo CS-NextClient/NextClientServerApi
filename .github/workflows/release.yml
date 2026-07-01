@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build-linux:
+    uses: ./.github/workflows/build-linux.yml
+
+  build-windows:
+    uses: ./.github/workflows/build-windows.yml
+
+  publish:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextclientapi_amxx-windows-Release
+          path: dist/windows
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextclientapi_amxx-linux-Release
+          path: dist/linux
+
+      - name: Package release archives
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          dll=$(find dist/windows -name 'nextclientapi_amxx.dll'     | head -n1)
+          so=$( find dist/linux   -name 'nextclientapi_amxx_i386.so' | head -n1)
+          for f in "$dll" "$so"; do
+            [ -n "$f" ] && [ -f "$f" ] || { echo "::error::missing build output: '$f'"; exit 1; }
+          done
+
+          # Lay out the AMXX payload: module binary + scripting include + RSA public keys.
+          stage_common() {
+            root="$1"
+            mkdir -p "$root/addons/amxmodx/modules" \
+                     "$root/addons/amxmodx/scripting/include" \
+                     "$root/addons/amxmodx/data/nextclient_api/pkeys"
+            cp addons/amxmodx/scripting/include/next_client_api.inc \
+               "$root/addons/amxmodx/scripting/include/"
+            cp -r addons/amxmodx/data/nextclient_api/pkeys/. \
+               "$root/addons/amxmodx/data/nextclient_api/pkeys/"
+          }
+
+          stage_common stage/windows
+          cp "$dll" stage/windows/addons/amxmodx/modules/
+          (cd stage/windows && zip -r "$GITHUB_WORKSPACE/NextClientServerApi-$TAG-windows-win32.zip" addons)
+
+          stage_common stage/linux
+          cp "$so" stage/linux/addons/amxmodx/modules/
+          (cd stage/linux && zip -r "$GITHUB_WORKSPACE/NextClientServerApi-$TAG-linux-i386.zip" addons)
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            NextClientServerApi-${{ github.event.release.tag_name }}-windows-win32.zip
+            NextClientServerApi-${{ github.event.release.tag_name }}-linux-i386.zip
+
+      - name: Upload assets to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: >
+          gh release upload "$TAG"
+          "NextClientServerApi-$TAG-windows-win32.zip"
+          "NextClientServerApi-$TAG-linux-i386.zip"
+          --clobber --repo "$GITHUB_REPOSITORY"
