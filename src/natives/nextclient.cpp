@@ -49,8 +49,7 @@ static cell AMX_NATIVE_CALL ncl_is_next_client(Amx* amx, cell* params)
         return FALSE;
     }
 
-    cell result = (cell)NAPI().GetNextClientVersionLegacy(params[arg_index]);
-    return result;
+    return 0;
 }
 
 static cell AMX_NATIVE_CALL ncl_is_using_nextclient(Amx* amx, cell* params)

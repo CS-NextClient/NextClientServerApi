@@ -64,19 +64,6 @@ enum eSandboxCvar
     SC_hud_deathnotice_max
 }
 
-enum eNclVersion
-{
-    NCLV_NOT_NEXT_CLIENT,
-    NCLV_2_1_7_OR_LOWER,
-    NCLV_2_1_8,
-    NCLV_2_1_9,
-    NCLV_2_1_10,
-    NCLV_2_1_11,
-    NCLV_2_1_12,
-    NCLV_2_2_0,
-    NCLV_2_3_0_OR_HIGHER
-}
-
 enum eNclUsing {
     NCL_NOT_USING,
     NCL_DECLARE_USING,
@@ -137,31 +124,14 @@ forward ncl_hwid_received(id, const hwid[]);
 native bool:ncl_is_client_api_ready(id);
 
 /**
- * Checks if client is Next Client. 
- *
- * @note Unreliable player identification! Use only to check features availability.
- *
- * @deprecated  This native will no longer allow you to get the exact version 
- *              of nextclient higher than v2.3.0 and won't allow session verification
- *              use ncl_is_using_nextclient() instead
- *
- * @param id    Client index
- *
- * @return      Next Client version
- */
-#pragma deprecated Use ncl_is_using_nextclient() instead
-native eNclVersion:ncl_is_next_client(id);
-
-/**
  * Checks if a player using Next Client. 
  *
  * @param id    Client index
  *
  * @return      Member of eNclUsing enum
  *                  NCL_NOT_USING - the player doesn't using nextclient
- *                  NCL_DECLARE_USING - the player has _ncl tag in setinfo what 
- *                      usually nextclient implicitly does, but we can't rule out
- *                      that it was forged by the player
+ *                  NCL_DECLARE_USING - the player declared they use nextclient via NCLM,
+ *                      but this is unverified and could be forged by the player
  *                  NCL_USING_VERIFICATED - the module is verified that the player
  *                      using nextclient. From that moment, the player can be trusted
  *                      and, for example, granted privileges

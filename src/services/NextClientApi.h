@@ -4,7 +4,6 @@
 #include <kangaru/kangaru.hpp>
 #include <sigslot/signal.hpp>
 
-#include "IDeprecatedAPI.h"
 #include "INextClientAPI.h"
 #include "INextClientInfo.h"
 #include "NextClientVersion.h"
@@ -27,7 +26,6 @@ public:
     explicit NextClientApi(ServerEventsManager& server_events_manager, NclmProtocol& nclm_protocol);
 
     bool IsClientReady(ClientId client) override;
-    NextClientVersionLegacy GetNextClientVersionLegacy(ClientId client);
     NextClientUsing IsClientUsingNextClient(ClientId client);
     bool GetNextClientVersion(ClientId client, NextClientVersion& version_out) override;
     int GetSupportedFeatures(ClientId client) override;
@@ -43,7 +41,6 @@ private:
     void HwidReceivedHandler(HwidReceivedEvent event);
     void PlayerPostThinkHandler(ClientId client);
     void ClientConnectBeginHandler(ClientId client);
-    void ClientConnectingHandler(ClientConnectingEvent event);
     void ClientDropConnectionHandler(ClientDropConnectionEvent event);
 };
 

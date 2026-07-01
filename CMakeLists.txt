@@ -150,7 +150,6 @@ add_library(${PROJECT_NAME} SHARED
         src/services/Miscellaneous.cpp
         src/services/INextClientInfo.h
         src/services/INextClientAPI.h
-        src/services/IDeprecatedAPI.h
         src/services/NextClientVersion.h
         src/services/mod_events/events.h
 )

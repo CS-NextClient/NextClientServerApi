@@ -16,7 +16,6 @@ NextClientApi::NextClientApi(ServerEventsManager& server_events_manager, NclmPro
     server_events_manager_.on_server_activated().connect(&NextClientApi::ServerActivatedHandler, this);
     server_events_manager_.on_player_think_post().connect(&NextClientApi::PlayerPostThinkHandler, this);
     server_events_manager_.on_client_connect_begin().connect(&NextClientApi::ClientConnectBeginHandler, this);
-    server_events_manager_.on_client_connecting().connect(&NextClientApi::ClientConnectingHandler, this);
     server_events_manager_.on_client_drop_connection().connect(&NextClientApi::ClientDropConnectionHandler, this);
     nclm_protocol_.on_client_auth().connect(&NextClientApi::ClientAuthHandler, this);
     nclm_protocol_.on_hwid_received().connect(&NextClientApi::HwidReceivedHandler, this);
@@ -31,17 +30,6 @@ bool NextClientApi::IsClientReady(ClientId client)
     }
 
     return it->second.is_api_ready;
-}
-
-NextClientVersionLegacy NextClientApi::GetNextClientVersionLegacy(ClientId client)
-{
-    auto it = players_.find(client);
-    if (it == players_.end())
-    {
-        return NextClientVersionLegacy::NOT_NEXTCLIENT;
-    }
-
-    return it->second.deprecated_client_version;
 }
 
 NextClientUsing NextClientApi::IsClientUsingNextClient(ClientId client)
@@ -203,15 +191,7 @@ void NextClientApi::LogClientConnected(ClientId client, const PlayerData& player
     const char* address = amxx::GetPlayerIp(client);
     uint32_t connection_number = ++nextclient_connect_count_;
 
-    const char* state = "compatible";
-    if (player.is_verified)
-    {
-        state = "verified";
-    }
-    else if (player.deprecated_client_version != NextClientVersionLegacy::NOT_NEXTCLIENT)
-    {
-        state = "legacy";
-    }
+    const char* state = player.is_verified ? "verified" : "compatible";
 
     LOG(INFO) << '"' << name
               << '<' << connection_number << '>'
@@ -301,71 +281,6 @@ void NextClientApi::PlayerPostThinkHandler(ClientId client)
 void NextClientApi::ClientConnectBeginHandler(ClientId client)
 {
     players_[client] = PlayerData{};
-}
-
-void NextClientApi::ClientConnectingHandler(ClientConnectingEvent event)
-{
-    auto it = players_.find(event.client_id);
-    if (it == players_.end())
-    {
-        PlayerData data{};
-        data.is_api_ready = false;
-        data.is_verified = false;
-        data.client_version = NextClientVersion{};
-        data.hwid = {};
-        it = players_.emplace(event.client_id, data).first;
-    }
-
-    PlayerData& data = it->second;
-
-    cssdk::Edict* entity = type_conversion::EdictByIndex(event.client_id);
-    if (!entity)
-    {
-        LOG(ERROR) << "entity is null (client: " << event.client_id << ")";
-        return;
-    }
-
-    std::string value = engine::InfoKeyValue(engine::GetInfoKeyBuffer(entity), "_ncl");
-
-    if (!value.empty())
-    {
-        if (value == "20")
-        {
-            data.client_version = {2, 2, 0};
-            data.deprecated_client_version = NextClientVersionLegacy::V_2_2_0;
-        }
-        else if (value == "18")
-        {
-            data.client_version = {2, 1, 8};
-            data.deprecated_client_version = NextClientVersionLegacy::V_2_1_8;
-        }
-        else if (value == "19")
-        {
-            data.client_version = {2, 1, 9};
-            data.deprecated_client_version = NextClientVersionLegacy::V_2_1_9;
-        }
-        else if (value == "110")
-        {
-            data.client_version = {2, 1, 10};
-            data.deprecated_client_version = NextClientVersionLegacy::V_2_1_10;
-        }
-        else if (value == "111")
-        {
-            data.client_version = {2, 1, 11};
-            data.deprecated_client_version = NextClientVersionLegacy::V_2_1_11;
-        }
-        else if (value == "112")
-        {
-            data.client_version = {2, 1, 12};
-            data.deprecated_client_version = NextClientVersionLegacy::V_2_1_12;
-        }
-        else if (value[0] == '1')
-        {
-            data.deprecated_client_version = NextClientVersionLegacy::V_2_1_7_OR_LOWER;
-        }
-
-        data.is_using_nextclient = true;
-    }
 }
 
 void NextClientApi::ClientDropConnectionHandler(ClientDropConnectionEvent event)
