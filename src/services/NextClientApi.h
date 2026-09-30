@@ -31,6 +31,7 @@ public:
     int GetSupportedFeatures(ClientId client) override;
 
     bool TryGetClientHwid(ClientId client, std::string& hwid_out);
+    bool TryGetClientPlatform(ClientId client, NCLM_PLATFORM& platform_out);
 
 private:
     bool ParseVersion(const std::string& in, NextClientVersion& out);
@@ -39,6 +40,7 @@ private:
     void ServerActivatedHandler(ServerActivatedEvent event);
     void ClientAuthHandler(ClientAuthEvent event);
     void HwidReceivedHandler(HwidReceivedEvent event);
+    void PlatformReceivedHandler(PlatformReceivedEvent event);
     void PlayerPostThinkHandler(ClientId client);
     void ClientConnectBeginHandler(ClientId client);
     void ClientDropConnectionHandler(ClientDropConnectionEvent event);

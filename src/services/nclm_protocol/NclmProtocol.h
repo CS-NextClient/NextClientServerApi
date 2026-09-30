@@ -21,6 +21,7 @@ class NclmProtocol : public sigslot::observer
     Verifier verifier_;
     sigslot::signal<ClientAuthEvent> on_client_auth_;
     sigslot::signal<HwidReceivedEvent> on_hwid_received_;
+    sigslot::signal<PlatformReceivedEvent> on_platform_received_;
     std::unordered_map<ClientId, VerificationPayload> player_data_;
 
     static NclmProtocol* instance_;
@@ -31,6 +32,7 @@ public:
 
     sigslot::signal<ClientAuthEvent>& on_client_auth();
     sigslot::signal<HwidReceivedEvent>& on_hwid_received();
+    sigslot::signal<PlatformReceivedEvent>& on_platform_received();
 
 private:
     void NclMessageHandler(ClientId client, NCLM_C2S opcode, int32_t payload_size);
@@ -38,6 +40,7 @@ private:
     void VerificationChallengeHandler(ClientId client);
     void DeclareVersionHandler(ClientId client);
     void HardwareIdHandler(ClientId client, int32_t payload_size);
+    void ClientPlatformHandler(ClientId client, int32_t payload_size);
     void ClientMessageHandler(cssdk::ReHookHandleNetCommand* hookchain, cssdk::IGameClient* client, cssdk::uint8 opcode);
     void ServerActivatedHandler(ServerActivatedEvent event);
     void SendServerInfoHandler(ClientId);

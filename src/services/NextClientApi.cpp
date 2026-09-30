@@ -19,6 +19,7 @@ NextClientApi::NextClientApi(ServerEventsManager& server_events_manager, NclmPro
     server_events_manager_.on_client_drop_connection().connect(&NextClientApi::ClientDropConnectionHandler, this);
     nclm_protocol_.on_client_auth().connect(&NextClientApi::ClientAuthHandler, this);
     nclm_protocol_.on_hwid_received().connect(&NextClientApi::HwidReceivedHandler, this);
+    nclm_protocol_.on_platform_received().connect(&NextClientApi::PlatformReceivedHandler, this);
 }
 
 bool NextClientApi::IsClientReady(ClientId client)
@@ -144,6 +145,24 @@ bool NextClientApi::TryGetClientHwid(ClientId client, std::string& hwid_out)
     return true;
 }
 
+bool NextClientApi::TryGetClientPlatform(ClientId client, NCLM_PLATFORM& platform_out)
+{
+    auto it = players_.find(client);
+    if (it == players_.end())
+    {
+        return false;
+    }
+
+    const PlayerData& player = it->second;
+    if (!player.is_using_nextclient || !player.platform.has_value())
+    {
+        return false;
+    }
+
+    platform_out = *player.platform;
+    return true;
+}
+
 bool NextClientApi::ParseVersion(const std::string& in, NextClientVersion& out)
 {
     if (in.size() > 10)
@@ -255,6 +274,23 @@ void NextClientApi::HwidReceivedHandler(HwidReceivedEvent event)
     player.hwid = event.hwid;
 
     amxx::ExecuteForward(forward_hwid_received_, event.client_id, player.hwid.c_str());
+}
+
+void NextClientApi::PlatformReceivedHandler(PlatformReceivedEvent event)
+{
+    auto it = players_.find(event.client_id);
+    if (it == players_.end())
+        return;
+
+    PlayerData& player = it->second;
+
+    if (player.platform.has_value())
+    {
+        LOG(WARNING) << "Duplicate platform from " << amxx::GetPlayerName(event.client_id) << ", ignored";
+        return;
+    }
+
+    player.platform = event.platform;
 }
 
 void NextClientApi::PlayerPostThinkHandler(ClientId client)

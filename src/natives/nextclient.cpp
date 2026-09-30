@@ -133,12 +133,45 @@ static cell AMX_NATIVE_CALL ncl_get_supported_features(Amx* amx, cell* params)
     return result;
 }
 
+static cell AMX_NATIVE_CALL ncl_get_client_platform(Amx* amx, cell* params)
+{
+    AmxContextGuard guard(amx);
+    enum args_e
+    {
+        arg_count,
+        arg_index
+    };
+
+    // NCL_PLATFORM_UNKNOWN in next_client_api.inc
+    constexpr cell platform_unknown = -1;
+
+    if (amxx::IsPlayerBot(params[arg_index]))
+    {
+        return platform_unknown;
+    }
+
+    if (!amxx::IsPlayerValid(params[arg_index]))
+    {
+        LOG(ERROR) << "invalid player index " << params[arg_index];
+        return platform_unknown;
+    }
+
+    NCLM_PLATFORM platform;
+    if (!NAPI().TryGetClientPlatform(params[arg_index], platform))
+    {
+        return platform_unknown;
+    }
+
+    return static_cast<cell>(platform);
+}
+
 static AmxNativeInfo g_Natives[] = {
     {"ncl_is_client_api_ready", ncl_is_client_api_ready},
     {"ncl_is_next_client", ncl_is_next_client},
     {"ncl_is_using_nextclient", ncl_is_using_nextclient},
     {"ncl_get_nextclient_version", ncl_get_nextclient_version},
     {"ncl_get_supported_features", ncl_get_supported_features},
+    {"ncl_get_client_platform", ncl_get_client_platform},
     {nullptr, nullptr}
 };
 

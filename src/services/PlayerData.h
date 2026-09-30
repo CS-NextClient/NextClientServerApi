@@ -1,7 +1,9 @@
 #pragma once
+#include <optional>
 #include <string>
 
 #include "NextClientVersion.h"
+#include "nclm_protocol/nclm_proto.h"
 
 struct PlayerData
 {
@@ -11,4 +13,5 @@ struct PlayerData
     bool is_verified{};
     bool connection_logged{};
     std::string hwid{};
+    std::optional<NCLM_PLATFORM> platform{};
 };

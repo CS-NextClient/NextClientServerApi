@@ -45,6 +45,11 @@ sigslot::signal<HwidReceivedEvent>& NclmProtocol::on_hwid_received()
     return on_hwid_received_;
 }
 
+sigslot::signal<PlatformReceivedEvent>& NclmProtocol::on_platform_received()
+{
+    return on_platform_received_;
+}
+
 void NclmProtocol::NclMessageHandler(ClientId client, NCLM_C2S opcode, int32_t payload_size)
 {
     switch (opcode)
@@ -63,6 +68,10 @@ void NclmProtocol::NclMessageHandler(ClientId client, NCLM_C2S opcode, int32_t p
 
         case NCLM_C2S::HARDWARE_ID:
             HardwareIdHandler(client, payload_size);
+            break;
+
+        case NCLM_C2S::CLIENT_PLATFORM:
+            ClientPlatformHandler(client, payload_size);
             break;
     }
 }
@@ -200,6 +209,33 @@ void NclmProtocol::HardwareIdHandler(ClientId client, int32_t payload_size)
     LOG(DEBUG) << "HWID received from " << name << " [" << hwid << "]";
 
     on_hwid_received_(HwidReceivedEvent{client, hwid, true});
+}
+
+void NclmProtocol::ClientPlatformHandler(ClientId client, int32_t payload_size)
+{
+    const char* name = amxx::GetPlayerName(client);
+
+    if (payload_size != static_cast<int32_t>(sizeof(uint8_t)))
+    {
+        LOG(WARNING) << "Unexpected platform payload size (" << payload_size << ") from " << name;
+        return;
+    }
+
+    int platform = rehlds_api::Funcs()->msg_read_byte();
+
+    if (*rehlds_api::Funcs()->get_msg_bad_read())
+    {
+        LOG(ERROR) << "Badread on platform from " << name;
+        return;
+    }
+
+    if (platform != static_cast<int>(NCLM_PLATFORM::Windows) && platform != static_cast<int>(NCLM_PLATFORM::Linux))
+    {
+        LOG(WARNING) << "Unknown platform (" << platform << ") from " << name;
+        return;
+    }
+
+    on_platform_received_(PlatformReceivedEvent{client, static_cast<NCLM_PLATFORM>(platform)});
 }
 
 void NclmProtocol::ClientMessageHandler(cssdk::ReHookHandleNetCommand* hookchain, cssdk::IGameClient* client, cssdk::uint8 opcode)
