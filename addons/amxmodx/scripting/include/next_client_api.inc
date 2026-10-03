@@ -82,6 +82,13 @@ enum eFeaturesFlags (<<= 1) {
     FEATURE_INVERT_MOUSE
 }
 
+// Values must match NCLM_PLATFORM in nclm_proto.h
+enum eNclPlatform {
+    NCL_PLATFORM_UNKNOWN = -1,
+    NCL_PLATFORM_WIN = 0,
+    NCL_PLATFORM_LINUX = 1
+}
+
 /**
  * Called once, when all api functionality is ready to use. Called only for Next Clients.
  *
@@ -158,6 +165,22 @@ native bool:ncl_get_nextclient_version(id, &major = 0, &minor = 0, &patch = 0);
  * @return          Member of eFeaturesFlags enum
  */
 native eFeaturesFlags:ncl_get_supported_features(id);
+
+/**
+ * Gets the operating system the player's Next Client is running on.
+ *
+ * @note The platform is reported by the client itself and is not verified, so it can be forged.
+ *       Do not use it for granting privileges. The value is available in ncl_client_api_ready.
+ *
+ * @param id        Client index
+ *
+ * @return          Member of eNclPlatform enum
+ *                      NCL_PLATFORM_UNKNOWN - the player doesn't use nextclient, or uses
+ *                          a version that doesn't report its platform
+ *                      NCL_PLATFORM_WIN - Windows
+ *                      NCL_PLATFORM_LINUX - Linux
+ */
+native eNclPlatform:ncl_get_client_platform(id);
 
 /**
  * Length of a HWID string, without the null terminator (HWID is a SHA-256 hex digest).
