@@ -1,5 +1,7 @@
 #include "WeaponEntitySync.h"
 
+#include <cstring>
+
 #include <easylogging++.h>
 
 #include <core/type_conversion.h>
@@ -61,7 +63,10 @@ uint16_t WeaponEntitySync::BindWeapon(cssdk::Edict* weapon)
         return it->second.ncl_entity_id;
     }
 
+    // Taken off the old record before it is erased: erasing invalidates the iterator, and
+    // reading through it afterwards is reading freed memory that usually still looks right.
     std::unordered_map<uint16_t, uint16_t> preserved_overrides;
+
     if (it != weapon_entities_.end())
     {
         preserved_overrides = std::move(it->second.sound_override);

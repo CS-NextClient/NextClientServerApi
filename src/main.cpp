@@ -27,6 +27,7 @@
 #include "services/ncl_entities/EntitySync.h"
 #include "services/ncl_entities/PlayerEntitySync.h"
 #include "services/ncl_entities/WeaponEntitySync.h"
+#include "services/ncl_entities/MaterialEntitySync.h"
 
 cssdk::CVar cvar_nclapi_version = {"nclapi_version", amxx::MODULE_VERSION, cssdk::FCVAR_SERVER | cssdk::FCVAR_SP_ONLY};
 
@@ -67,6 +68,7 @@ bool Initialize()
     g_RootContainer->service<EntitySyncService>();
     g_RootContainer->service<PlayerNclEntitySyncService>();
     g_RootContainer->service<WeaponNclEntitySyncService>();
+    g_RootContainer->service<MaterialNclEntitySyncService>();
 
     metamod::engine::CvarRegister(&cvar_nclapi_version);
 

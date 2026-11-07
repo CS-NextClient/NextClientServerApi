@@ -559,3 +559,79 @@ native ncl_override_weapon_sound(weapon_id, const original[], const replacement[
  * @return              1 on success, 0 if the weapon entity is invalid
  */
 native ncl_override_weapon_sound_clear(weapon_id);
+
+/**
+ * Puts a material on an entity.
+ *
+ * A material lives in a preset file and has a name there; those two name it. The preset is
+ * not announced or registered anywhere - deliver the file with ncl_upload_file and pass
+ * here the path as the client sees it, and the client reads it the first time it is needed.
+ *
+ * @note Any entity can wear a material, and it can wear several at once: each material says
+ *       which texture of the model it dresses, and one that dresses the same texture as
+ *       another replaces it. What a client sees is decided by whether it can see the entity,
+ *       so nothing has to be resent to players who join or come into view later.
+ *
+ * @param entity        Entity index
+ * @param preset        Path to the preset file as the client sees it (1 to 189 bytes)
+ * @param material      Name of the material inside that preset (1 to 189 bytes)
+ *
+ * @return              1 on success, 0 if the arguments are invalid
+ */
+native ncl_mat_bind(entity, const preset[], const material[]);
+
+/**
+ * Takes one material off an entity, naming it the same way it was put on.
+ *
+ * @param entity        Entity index
+ * @param preset        Path to the preset file as the client sees it (1 to 189 bytes)
+ * @param material      Name of the material inside that preset (1 to 189 bytes)
+ *
+ * @return              1 on success, 0 if the arguments are invalid or the entity was not wearing it
+ */
+native ncl_mat_unbind(entity, const preset[], const material[]);
+
+/**
+ * Takes everything off an entity and stops synchronizing it.
+ *
+ * @param entity        Entity index
+ *
+ * @return              1 on success, 0 if the entity is invalid
+ */
+native ncl_mat_clear(entity);
+
+/**
+ * Enables transmission outside PVS for an entity with a bound material.
+ * Applies only to ready NextClient recipients; normal game visibility rules still apply.
+ * Clearing the materials, final unbind, entity reuse or owner reuse revokes the flag.
+ * @return 1 on success, 0 if the entity has no active material binding.
+ */
+native ncl_mat_through_walls(entity, bool:enabled = true);
+
+/**
+ * Sets one instance parameter of the material dressing one texture of an entity.
+ *
+ * Values are finite floats in the parameter's declared units. The client clamps bounds
+ * and requires integer indices for choice parameters. Only instance scalars can be set.
+ *
+ * @note The complete texture/name key, including the slash, must not exceed 189 bytes.
+ *
+ * @param entity        Entity index
+ * @param texture       Texture the material dresses, as the model names it (e.g. "glock_slide.bmp")
+ * @param name          Parameter name as the program declares it (e.g. "uWear")
+ * @param value         Finite float in the parameter's declared units
+ *
+ * @return              1 on success, 0 if the arguments are invalid
+ */
+native ncl_mat_param(entity, const texture[], const name[], Float:value);
+
+/**
+ * The same, for every material the entity wears that declares the parameter.
+ *
+ * @param entity        Entity index
+ * @param name          Parameter name as the program declares it (1 to 189 bytes)
+ * @param value         Finite float in the parameter's declared units
+ *
+ * @return              1 on success, 0 if the arguments are invalid
+ */
+native ncl_mat_param_all(entity, const name[], Float:value);

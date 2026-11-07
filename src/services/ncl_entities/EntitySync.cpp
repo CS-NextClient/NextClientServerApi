@@ -8,6 +8,7 @@
 #include <core/type_conversion.h>
 #include <metamod/engine.h>
 
+#include "services/ncl_entities/EntitySyncPackets.h"
 #include "utils/msg_ex.h"
 
 using namespace ncl_entity;
@@ -16,110 +17,28 @@ using namespace msg_ex;
 
 namespace
 {
-    void WriteArrayFull(const std::vector<std::pair<uint16_t, uint16_t>>& arr)
+    std::vector<EntitySyncPackets::Field> PacketSchema(const EntityTypeDescriptor& type)
     {
-        if (arr.size() > 254)
+        std::vector<EntitySyncPackets::Field> fields;
+        fields.reserve(type.fields.size());
+        for (const EntityFieldDescriptor& field : type.fields)
         {
-            LOG(WARNING) << "[NclEntitySync] WriteArrayFull: array truncated from " << arr.size() << " to 254 pairs";
+            fields.push_back({field.field_bit, field.type});
         }
-
-        uint8_t count = static_cast<uint8_t>(std::min(arr.size(), static_cast<size_t>(254)));
-        WriteByte(count);
-        for (uint8_t i = 0; i < count; ++i)
-        {
-            WriteUShort(arr[i].first);
-            WriteUShort(arr[i].second);
-        }
-        WriteByte(0);
+        return fields;
     }
 
-    void WriteArrayDelta(const ArrayStringIdPairsDelta& delta)
+    void SendPackets(const EntitySyncPackets::Result& prepared, cssdk::Edict* player, int create_message, int update_message)
     {
-        if (delta.clear)
+        for (const EntitySyncPackets::Packet& packet : prepared.packets)
         {
-            WriteByte(0xFF);
-            return;
+            MessageBegin(cssdk::MessageType::One, packet.create ? create_message : update_message, nullptr, player);
+            for (uint8_t byte : packet.bytes)
+            {
+                WriteByte(byte);
+            }
+            MessageEnd();
         }
-
-        uint8_t added_count = static_cast<uint8_t>(std::min(delta.added.size(), static_cast<size_t>(254)));
-        uint8_t removed_count = static_cast<uint8_t>(std::min(delta.removed.size(), static_cast<size_t>(255)));
-
-        WriteByte(added_count);
-        for (uint8_t i = 0; i < added_count; ++i)
-        {
-            WriteUShort(delta.added[i].first);
-            WriteUShort(delta.added[i].second);
-        }
-        WriteByte(removed_count);
-        for (uint8_t i = 0; i < removed_count; ++i)
-        {
-            WriteUShort(delta.removed[i].first);
-            WriteUShort(delta.removed[i].second);
-        }
-    }
-
-    void WriteScalarFieldValue(const FieldValue& fv, FieldType type)
-    {
-        switch (type)
-        {
-            case FieldType::BYTE:
-                WriteByte(std::get<uint8_t>(fv.value));
-                break;
-            case FieldType::USHORT:
-                WriteUShort(std::get<uint16_t>(fv.value));
-                break;
-            case FieldType::UINT:
-                WriteUInt(std::get<uint32_t>(fv.value));
-                break;
-            case FieldType::FLOAT:
-                WriteFloat(std::get<float>(fv.value));
-                break;
-            case FieldType::COORD:
-                WriteCoord(std::get<float>(fv.value));
-                break;
-            case FieldType::STRING_ID:
-                WriteUShort(std::get<uint16_t>(fv.value));
-                break;
-            default:
-                break;
-        }
-    }
-
-    void WriteDefaultFieldValue(FieldType type)
-    {
-        switch (type)
-        {
-            case FieldType::BYTE:
-                WriteByte(0);
-                break;
-            case FieldType::USHORT:
-                WriteUShort(0);
-                break;
-            case FieldType::UINT:
-                WriteUInt(0);
-                break;
-            case FieldType::FLOAT:
-                WriteFloat(0);
-                break;
-            case FieldType::COORD:
-                WriteCoord(.0f);
-                break;
-            case FieldType::STRING_ID:
-                WriteUShort(0);
-                break;
-            case FieldType::ARRAY_STRING_ID_PAIRS:
-            case FieldType::ARRAY_STRING_ID_PAIRS_DELTA:
-                WriteByte(0);
-                WriteByte(0);
-                break;
-        }
-    }
-
-    const std::vector<std::pair<uint16_t, uint16_t>>* GetArrayFromCache(const FieldValue& fv)
-    {
-        return std::holds_alternative<std::vector<std::pair<uint16_t, uint16_t>>>(fv.value)
-                   ? &std::get<std::vector<std::pair<uint16_t, uint16_t>>>(fv.value)
-                   : nullptr;
     }
 } // namespace
 
@@ -169,9 +88,24 @@ uint16_t EntitySync::Create(
         return 0;
     }
 
-    for (const auto& [existing_id, existing_entity] : entities_)
+    for (auto it = entities_.begin(); it != entities_.end();)
     {
-        if (existing_entity.bound_edict == bound_edict && existing_entity.type_id == type_id)
+        const auto current = it++;
+        const uint16_t existing_id = current->first;
+        const SyncedEntity& existing_entity = current->second;
+
+        if (existing_entity.bound_edict != bound_edict)
+        {
+            continue;
+        }
+
+        if (existing_entity.last_serialnumber != bound_edict->serial_number)
+        {
+            Destroy(existing_id);
+            continue;
+        }
+
+        if (existing_entity.type_id == type_id)
         {
             LOG(WARNING) << "[NclEntitySync] Create: bound_edict already has entity_id=" << existing_id;
             return existing_id;
@@ -221,6 +155,13 @@ uint16_t EntitySync::Create(
         }
     }
 
+    EntitySyncPackets::Result prepared = EntitySyncPackets::PrepareCreate(type_id, entity_id, PacketSchema(type), entity.field_cache);
+    if (!prepared)
+    {
+        LOG(ERROR) << "[NclEntitySync] Create: " << prepared.error;
+        return 0;
+    }
+
     // Only push to clients that are already past their first frame; the rest
     // receive this entity from ClientFirstFrameHandler (avoids duplicate create).
     for (int i = 1; i <= rehlds_api::ServerStatic()->GetMaxClients(); ++i)
@@ -233,7 +174,6 @@ uint16_t EntitySync::Create(
         if (ClientSupportsEntitySync(i) && IsEntityVisibleToClient(i, entity))
         {
             SendEntityCreate(i, entity);
-            client_visible_entities_[i].insert(entity_id);
         }
     }
 
@@ -241,7 +181,7 @@ uint16_t EntitySync::Create(
     return entity_id;
 }
 
-void EntitySync::ApplyFieldUpdate(
+bool EntitySync::ApplyFieldUpdate(
     SyncedEntity& entity,
     const EntityTypeDescriptor& type,
     uint16_t bit,
@@ -262,127 +202,44 @@ void EntitySync::ApplyFieldUpdate(
     if (field_ptr == nullptr)
     {
         LOG(WARNING) << "[NclEntitySync] Update: unknown field_bit " << bit << " for type_id " << static_cast<int>(entity.type_id);
-        return;
+        return false;
     }
 
     const EntityFieldDescriptor& field = *field_ptr;
     auto cache_it = entity.field_cache.find(bit);
-
-    if (field.type == FieldType::ARRAY_STRING_ID_PAIRS)
+    const FieldValue* current = cache_it == entity.field_cache.end() ? nullptr : &cache_it->second;
+    FieldValue full;
+    FieldValue pending;
+    EntitySyncPackets::Mutation mutation = EntitySyncPackets::ApplyUpdate(field.type, current, new_val, full, pending);
+    if (mutation == EntitySyncPackets::Mutation::Invalid)
     {
-        // Full snapshot only.
-        if (!std::holds_alternative<std::vector<std::pair<uint16_t, uint16_t>>>(new_val.value))
-        {
-            LOG(WARNING) << "[NclEntitySync] Update: ARRAY_STRING_ID_PAIRS expects a vector value (field_bit " << bit << ")";
-            return;
-        }
-
-        if (cache_it == entity.field_cache.end() || cache_it->second != new_val)
-        {
-            entity.field_cache[bit] = std::move(new_val);
-            actual_field_mask |= bit;
-        }
+        LOG(WARNING) << "[NclEntitySync] Update: invalid field value for bit " << bit;
+        return false;
     }
-    else if (field.type == FieldType::ARRAY_STRING_ID_PAIRS_DELTA)
+    if (mutation == EntitySyncPackets::Mutation::Unchanged)
     {
-        if (std::holds_alternative<ArrayStringIdPairsDelta>(new_val.value))
-        {
-            const auto& delta = std::get<ArrayStringIdPairsDelta>(new_val.value);
-
-            std::vector<std::pair<uint16_t, uint16_t>> current;
-            if (cache_it != entity.field_cache.end())
-            {
-                const auto* arr_ptr = GetArrayFromCache(cache_it->second);
-                if (arr_ptr)
-                {
-                    current = *arr_ptr;
-                }
-            }
-
-            if (delta.clear)
-            {
-                current.clear();
-            }
-
-            for (const auto& p : delta.added)
-            {
-                auto cur_it = std::find_if(current.begin(), current.end(), [&p](const auto& pair) { return pair.first == p.first; });
-                if (cur_it != current.end())
-                {
-                    *cur_it = p;
-                }
-                else
-                {
-                    current.push_back(p);
-                }
-            }
-
-            for (const auto& p : delta.removed)
-            {
-                auto cur_it = std::find_if(current.begin(), current.end(), [&p](const auto& pair) { return pair.first == p.first; });
-                if (cur_it != current.end())
-                {
-                    current.erase(cur_it);
-                }
-            }
-
-            entity.field_cache[bit] = FieldValue{std::move(current)};
-            entity.pending_deltas[bit] = std::move(new_val);
-            actual_field_mask |= bit;
-        }
-        else if (std::holds_alternative<std::vector<std::pair<uint16_t, uint16_t>>>(new_val.value))
-        {
-            // Full snapshot for a delta-typed field: compute delta against the cache.
-            const auto& new_vec = std::get<std::vector<std::pair<uint16_t, uint16_t>>>(new_val.value);
-
-            ArrayStringIdPairsDelta delta;
-            if (cache_it != entity.field_cache.end())
-            {
-                const auto* old_arr_ptr = GetArrayFromCache(cache_it->second);
-                if (old_arr_ptr)
-                {
-                    auto old_sorted = *old_arr_ptr;
-                    auto new_sorted = new_vec;
-                    std::sort(old_sorted.begin(), old_sorted.end());
-                    std::sort(new_sorted.begin(), new_sorted.end());
-
-                    std::set_difference(
-                        old_sorted.begin(), old_sorted.end(), new_sorted.begin(), new_sorted.end(), std::back_inserter(delta.removed)
-                    );
-                    std::set_difference(
-                        new_sorted.begin(), new_sorted.end(), old_sorted.begin(), old_sorted.end(), std::back_inserter(delta.added)
-                    );
-                }
-                else
-                {
-                    delta.added = new_vec;
-                }
-            }
-            else
-            {
-                delta.added = new_vec;
-            }
-
-            if (!delta.added.empty() || !delta.removed.empty())
-            {
-                entity.field_cache[bit] = std::move(new_val);
-                entity.pending_deltas[bit] = FieldValue{std::move(delta)};
-                actual_field_mask |= bit;
-            }
-        }
-        else
-        {
-            LOG(WARNING) << "[NclEntitySync] Update: ARRAY_STRING_ID_PAIRS_DELTA expects a vector or delta value (field_bit " << bit << ")";
-        }
+        return true;
     }
-    else
+
+    EntitySyncPackets::Fields cache = entity.field_cache;
+    EntitySyncPackets::Fields deltas = entity.pending_deltas;
+    cache[bit] = full;
+    if (field.type == FieldType::ARRAY_STRING_ID_PAIRS_DELTA || field.type == FieldType::ARRAY_STRING_ID_FLOAT_PAIRS_DELTA)
     {
-        if (cache_it == entity.field_cache.end() || cache_it->second != new_val)
-        {
-            entity.field_cache[bit] = std::move(new_val);
-            actual_field_mask |= bit;
-        }
+        deltas[bit] = pending;
     }
+    EntitySyncPackets::Result prepared =
+        EntitySyncPackets::PrepareUpdate(entity.type_id, entity.entity_id, PacketSchema(type), cache, deltas, bit);
+    if (!prepared)
+    {
+        LOG(WARNING) << "[NclEntitySync] Update: " << prepared.error;
+        return false;
+    }
+
+    entity.field_cache = std::move(cache);
+    entity.pending_deltas = std::move(deltas);
+    actual_field_mask |= bit;
+    return true;
 }
 
 void EntitySync::Update(uint16_t entity_id, const std::unordered_map<uint16_t, FieldValue>& fields)
@@ -404,47 +261,51 @@ void EntitySync::Update(uint16_t entity_id, const std::unordered_map<uint16_t, F
 
     const EntityTypeDescriptor& type = type_it->second;
 
+    for (const auto& [bit, value] : fields)
+    {
+        auto field = std::find_if(type.fields.begin(), type.fields.end(), [bit](const EntityFieldDescriptor& descriptor) {
+            return descriptor.field_bit == bit;
+        });
+        if (field == type.fields.end() || !EntitySyncPackets::IsValueValid(field->type, value, true))
+        {
+            LOG(WARNING) << "[NclEntitySync] Update: invalid field " << bit;
+            return;
+        }
+    }
+
+    SyncedEntity updated = entity;
     uint16_t actual_field_mask = 0;
     for (const auto& [bit, val] : fields)
     {
-        ApplyFieldUpdate(entity, type, bit, val, actual_field_mask);
+        if (!ApplyFieldUpdate(updated, type, bit, val, actual_field_mask))
+        {
+            return;
+        }
     }
 
     if (actual_field_mask != 0)
     {
+        entity = std::move(updated);
         BroadcastEntityUpdate(entity, actual_field_mask);
     }
 }
 
 void EntitySync::Update(uint16_t entity_id, uint16_t field_bit, FieldValue value)
 {
-    auto it = entities_.find(entity_id);
-    if (it == entities_.end())
-    {
-        LOG(WARNING) << "[NclEntitySync] Update: entity_id " << entity_id << " not found";
-        return;
-    }
-
-    SyncedEntity& entity = it->second;
-
-    auto type_it = types_.find(entity.type_id);
-    if (type_it == types_.end())
-    {
-        return;
-    }
-
-    uint16_t actual_field_mask = 0;
-    ApplyFieldUpdate(entity, type_it->second, field_bit, std::move(value), actual_field_mask);
-
-    if (actual_field_mask != 0)
-    {
-        BroadcastEntityUpdate(entity, actual_field_mask);
-    }
+    Update(entity_id, {{field_bit, std::move(value)}});
 }
 
 bool EntitySync::Exists(uint16_t entity_id) const
 {
     return entity_id != 0 && entities_.count(entity_id) > 0;
+}
+
+bool EntitySync::IsBoundTo(uint16_t entity_id, uint8_t type_id, const cssdk::Edict* bound_edict, int serial_number) const
+{
+    auto it = entities_.find(entity_id);
+
+    return it != entities_.end() && it->second.type_id == type_id && it->second.bound_edict == bound_edict &&
+           it->second.last_serialnumber == serial_number;
 }
 
 void EntitySync::Destroy(uint16_t entity_id)
@@ -512,7 +373,6 @@ void EntitySync::ClientFirstFrameHandler(ClientId client)
         if (IsEntityVisibleToClient(client, entity))
         {
             SendEntityCreate(client, entity);
-            visible_set.insert(entity.entity_id);
         }
     }
 }
@@ -609,13 +469,7 @@ void EntitySync::FrameHandler()
                 continue;
             }
 
-            FieldValue new_value = field.getter(entity.bound_edict);
-            auto cache_it = entity.field_cache.find(field.field_bit);
-            if (cache_it == entity.field_cache.end() || cache_it->second != new_value)
-            {
-                entity.field_cache[field.field_bit] = std::move(new_value);
-                field_mask |= field.field_bit;
-            }
+            ApplyFieldUpdate(entity, type, field.field_bit, field.getter(entity.bound_edict), field_mask);
         }
 
         for (int i = 1; i <= rehlds_api::ServerStatic()->GetMaxClients(); ++i)
@@ -643,7 +497,6 @@ void EntitySync::FrameHandler()
             if (visible && !was_visible)
             {
                 SendEntityCreate(i, entity);
-                visible_set.insert(entity.entity_id);
             }
             else if (!visible && was_visible)
             {
@@ -653,6 +506,18 @@ void EntitySync::FrameHandler()
             else if (visible && was_visible && field_mask != 0)
             {
                 SendEntityUpdate(i, entity, field_mask);
+            }
+        }
+
+        for (auto pending = entity.pending_deltas.begin(); pending != entity.pending_deltas.end();)
+        {
+            if (field_mask & pending->first)
+            {
+                pending = entity.pending_deltas.erase(pending);
+            }
+            else
+            {
+                ++pending;
             }
         }
 
@@ -714,150 +579,57 @@ bool EntitySync::IsEntityVisibleToClient(ClientId client, const SyncedEntity& en
     return false;
 }
 
-void EntitySync::SendEntityCreate(ClientId client, const SyncedEntity& entity)
+bool EntitySync::SendEntityCreate(ClientId client, const SyncedEntity& entity)
 {
-    if (message_nsync_create_ == 0)
-    {
-        return;
-    }
-
-    EnsureStringsForClient(client, entity);
-
-    cssdk::Edict* player_edict = type_conversion::EdictByIndex(client);
-    if (!player_edict)
-    {
-        return;
-    }
-
     auto type_it = types_.find(entity.type_id);
-    if (type_it == types_.end())
+    cssdk::Edict* player = type_conversion::EdictByIndex(client);
+    if (message_nsync_create_ == 0 || message_nsync_update_ == 0 || !player || player->free || type_it == types_.end())
     {
-        return;
+        return false;
     }
 
-    const EntityTypeDescriptor& type = type_it->second;
-
-    MessageBegin(cssdk::MessageType::One, message_nsync_create_, nullptr, player_edict);
-    WriteByte(entity.type_id);
-    WriteUShort(entity.entity_id);
-
-    for (const EntityFieldDescriptor& field : type.fields)
+    EntitySyncPackets::Result prepared =
+        EntitySyncPackets::PrepareCreate(entity.type_id, entity.entity_id, PacketSchema(type_it->second), entity.field_cache);
+    if (!prepared)
     {
-        auto it = entity.field_cache.find(field.field_bit);
-        if (it == entity.field_cache.end())
-        {
-            WriteDefaultFieldValue(field.type);
-            continue;
-        }
-
-        if (field.type == FieldType::ARRAY_STRING_ID_PAIRS || field.type == FieldType::ARRAY_STRING_ID_PAIRS_DELTA)
-        {
-            const auto* arr = GetArrayFromCache(it->second);
-            if (arr)
-            {
-                WriteArrayFull(*arr);
-            }
-            else
-            {
-                WriteDefaultFieldValue(field.type);
-            }
-        }
-        else
-        {
-            WriteScalarFieldValue(it->second, field.type);
-        }
+        LOG(WARNING) << "[NclEntitySync] SendEntityCreate: " << prepared.error;
+        return false;
     }
 
-    metamod::engine::MessageEnd();
+    return EntitySyncPackets::PublishCreate(
+        prepared, entity.entity_id, client_visible_entities_[client], [&](const EntitySyncPackets::Result& packets) {
+            for (uint16_t id : packets.string_ids)
+            {
+                string_registry_.EnsureSent(client, id);
+            }
+            SendPackets(packets, player, message_nsync_create_, message_nsync_update_);
+        }
+    );
 }
 
 void EntitySync::SendEntityUpdate(ClientId client, const SyncedEntity& entity, uint16_t field_mask)
 {
-    if (message_nsync_update_ == 0)
-    {
-        return;
-    }
-
-    EnsureStringsForClient(client, entity);
-
-    cssdk::Edict* player_edict = type_conversion::EdictByIndex(client);
-    if (!player_edict)
-    {
-        return;
-    }
-
     auto type_it = types_.find(entity.type_id);
-    if (type_it == types_.end())
+    cssdk::Edict* player = type_conversion::EdictByIndex(client);
+    if (message_nsync_update_ == 0 || !player || player->free || type_it == types_.end())
     {
         return;
     }
 
-    const EntityTypeDescriptor& type = type_it->second;
-
-    MessageBegin(cssdk::MessageType::One, message_nsync_update_, nullptr, player_edict);
-    WriteByte(entity.type_id);
-    WriteUShort(entity.entity_id);
-    WriteUShort(field_mask);
-
-    for (const EntityFieldDescriptor& field : type.fields)
+    EntitySyncPackets::Result prepared = EntitySyncPackets::PrepareUpdate(
+        entity.type_id, entity.entity_id, PacketSchema(type_it->second), entity.field_cache, entity.pending_deltas, field_mask
+    );
+    if (!prepared)
     {
-        if ((field_mask & field.field_bit) == 0)
-        {
-            continue;
-        }
-
-        if (field.type == FieldType::ARRAY_STRING_ID_PAIRS_DELTA)
-        {
-            auto pending_it = entity.pending_deltas.find(field.field_bit);
-            if (pending_it != entity.pending_deltas.end() && std::holds_alternative<ArrayStringIdPairsDelta>(pending_it->second.value))
-            {
-                WriteArrayDelta(std::get<ArrayStringIdPairsDelta>(pending_it->second.value));
-            }
-            else
-            {
-                // No pending delta: stream the current cached state as an empty-delta snapshot.
-                auto cache_it = entity.field_cache.find(field.field_bit);
-                const std::vector<std::pair<uint16_t, uint16_t>>* arr =
-                    cache_it != entity.field_cache.end() ? GetArrayFromCache(cache_it->second) : nullptr;
-                if (arr)
-                {
-                    WriteArrayFull(*arr);
-                }
-                else
-                {
-                    WriteDefaultFieldValue(field.type);
-                }
-            }
-        }
-        else if (field.type == FieldType::ARRAY_STRING_ID_PAIRS)
-        {
-            auto cache_it = entity.field_cache.find(field.field_bit);
-            const std::vector<std::pair<uint16_t, uint16_t>>* arr =
-                cache_it != entity.field_cache.end() ? GetArrayFromCache(cache_it->second) : nullptr;
-            if (arr)
-            {
-                WriteArrayFull(*arr);
-            }
-            else
-            {
-                WriteDefaultFieldValue(field.type);
-            }
-        }
-        else
-        {
-            auto cache_it = entity.field_cache.find(field.field_bit);
-            if (cache_it != entity.field_cache.end())
-            {
-                WriteScalarFieldValue(cache_it->second, field.type);
-            }
-            else
-            {
-                WriteDefaultFieldValue(field.type);
-            }
-        }
+        LOG(WARNING) << "[NclEntitySync] SendEntityUpdate: " << prepared.error;
+        return;
     }
 
-    metamod::engine::MessageEnd();
+    for (uint16_t id : prepared.string_ids)
+    {
+        string_registry_.EnsureSent(client, id);
+    }
+    SendPackets(prepared, player, message_nsync_create_, message_nsync_update_);
 }
 
 void EntitySync::SendEntityDestroy(ClientId client, const SyncedEntity& entity)
@@ -877,43 +649,6 @@ void EntitySync::SendEntityDestroy(ClientId client, const SyncedEntity& entity)
     WriteByte(entity.type_id);
     WriteUShort(entity.entity_id);
     MessageEnd();
-}
-
-void EntitySync::EnsureStringsForClient(ClientId client, const SyncedEntity& entity)
-{
-    auto type_it = types_.find(entity.type_id);
-    if (type_it == types_.end())
-    {
-        return;
-    }
-
-    for (const EntityFieldDescriptor& field : type_it->second.fields)
-    {
-        if (field.type == FieldType::STRING_ID)
-        {
-            auto it = entity.field_cache.find(field.field_bit);
-            if (it != entity.field_cache.end())
-            {
-                string_registry_.EnsureSent(client, std::get<uint16_t>(it->second.value));
-            }
-        }
-        else if (field.type == FieldType::ARRAY_STRING_ID_PAIRS || field.type == FieldType::ARRAY_STRING_ID_PAIRS_DELTA)
-        {
-            auto it = entity.field_cache.find(field.field_bit);
-            if (it != entity.field_cache.end())
-            {
-                const auto* arr = GetArrayFromCache(it->second);
-                if (arr)
-                {
-                    for (const auto& p : *arr)
-                    {
-                        string_registry_.EnsureSent(client, p.first);
-                        string_registry_.EnsureSent(client, p.second);
-                    }
-                }
-            }
-        }
-    }
 }
 
 void EntitySync::BroadcastEntityUpdate(SyncedEntity& entity, uint16_t field_mask)

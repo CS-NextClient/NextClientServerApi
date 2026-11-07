@@ -1,0 +1,80 @@
+{
+    "version": 1,
+    "materials": [
+        {
+            "name": "golden_slide",
+            "texture": "glock_slide.bmp",
+            "material": {
+                "program": "weapon_finish",
+                "params": {
+                    "uWearMap": { "texture": "materials/masks/wear/blotches.png" },
+                    "uWearMapTransform": [ 8.0, 8.0, 0.0, 0.0 ],
+                    "uUnderlay": { "texture": "materials/surfaces/brass.png" },
+                    "uUnderlayTint": [ 1.0, 0.55, 0.1, 1.0 ],
+                    "uWear": 0.84375,
+                    "uWearSoftness": 0.05
+                }
+            }
+        },
+        {
+            "name": "blue_steel_slide",
+            "texture": "glock_slide.bmp",
+            "material": {
+                "program": "weapon_finish",
+                "params": {
+                    "uWearMap": { "texture": "materials/masks/scratches/coarse_random.png" },
+                    "uWearMapTransform": [ 1.0, 1.0, 0.0, 0.0 ],
+                    "uUnderlay": { "texture": "materials/surfaces/metal_bare.png" },
+                    "uUnderlayTint": [ 0.15, 0.4, 1.0, 1.0 ],
+                    "uWear": 0.5,
+                    "uWearSoftness": 0.3
+                }
+            }
+        },
+        {
+            "name": "golden_base",
+            "texture": "glock_base.bmp",
+            "material": {
+                "program": "weapon_finish",
+                "params": {
+                    "uWearMap": { "texture": "materials/masks/wear/blotches.png" },
+                    "uWearMapTransform": [ 8.0, 8.0, 0.0, 0.0 ],
+                    "uUnderlay": { "texture": "materials/surfaces/brass.png" },
+                    "uUnderlayTint": [ 1.0, 0.55, 0.1, 1.0 ],
+                    "uWear": 0.84375,
+                    "uWearSoftness": 0.05
+                }
+            }
+        },
+        {
+            "name": "golden_slide_test_model",
+            "texture": "Slide1.bmp",
+            "material": {
+                "program": "weapon_finish",
+                "params": {
+                    "uWearMap": { "texture": "materials/masks/wear/blotches.png" },
+                    "uWearMapTransform": [ 8.0, 8.0, 0.0, 0.0 ],
+                    "uUnderlay": { "texture": "materials/surfaces/brass.png" },
+                    "uUnderlayTint": [ 1.0, 0.55, 0.1, 1.0 ],
+                    "uWear": 0.84375,
+                    "uWearSoftness": 0.05
+                }
+            }
+        },
+        {
+            "name": "blue_steel_slide_test_model",
+            "texture": "Slide1.bmp",
+            "material": {
+                "program": "weapon_finish",
+                "params": {
+                    "uWearMap": { "texture": "materials/masks/scratches/coarse_random.png" },
+                    "uWearMapTransform": [ 1.0, 1.0, 0.0, 0.0 ],
+                    "uUnderlay": { "texture": "materials/surfaces/metal_bare.png" },
+                    "uUnderlayTint": [ 0.15, 0.4, 1.0, 1.0 ],
+                    "uWear": 0.5,
+                    "uWearSoftness": 0.3
+                }
+            }
+        }
+    ]
+}

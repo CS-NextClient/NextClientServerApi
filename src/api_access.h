@@ -10,6 +10,7 @@
 #include "services/Miscellaneous.h"
 #include "services/StringRegistry.h"
 #include "services/ncl_entities/WeaponEntitySync.h"
+#include "services/ncl_entities/MaterialEntitySync.h"
 
 extern std::unique_ptr<kgr::container> g_RootContainer;
 
@@ -51,6 +52,11 @@ inline HudSprite& GetHudSprite()
 inline Miscellaneous& GetMiscellaneous()
 {
     return g_RootContainer->service<MiscellaneousService>();
+}
+
+inline MaterialEntitySync& GetMaterialNclEntitySync()
+{
+    return g_RootContainer->service<MaterialNclEntitySyncService>();
 }
 
 inline WeaponEntitySync& GetWeaponNclEntitySync()

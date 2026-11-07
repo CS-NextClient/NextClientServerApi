@@ -11,4 +11,5 @@ void AddNatives_All()
     AddNatives_Miscellaneous();
     AddNatives_Hwid();
     AddNatives_WeaponSoundOverride();
+    AddNatives_Material();
 }

@@ -4,10 +4,16 @@
 
 #include <core/type_conversion.h>
 
+#include "utils/UserMessageLimits.h"
 #include "utils/msg_ex.h"
 
 using namespace core;
 using namespace msg_ex;
+
+namespace
+{
+    constexpr size_t kRegistrationOverhead = sizeof(uint16_t) + 1;
+}
 
 StringRegistry::StringRegistry(ServerEventsManager& server_events_manager)
 {
@@ -16,9 +22,14 @@ StringRegistry::StringRegistry(ServerEventsManager& server_events_manager)
     server_events_manager.on_client_disconnected().connect(&StringRegistry::ClientDisconnectedHandler, this);
 }
 
+bool StringRegistry::IsRegistrable(const std::string& str)
+{
+    return !str.empty() && str.size() <= msg_ex::kMaxPayload - kRegistrationOverhead;
+}
+
 uint16_t StringRegistry::GetOrRegister(const std::string& str)
 {
-    if (str.empty())
+    if (!IsRegistrable(str))
     {
         return 0;
     }

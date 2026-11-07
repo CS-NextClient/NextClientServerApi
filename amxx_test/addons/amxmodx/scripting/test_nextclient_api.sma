@@ -30,6 +30,18 @@ new LOG_FILE[] = "test_nextclient_api.log";
 // ncl_precache_sound() for custom sound
 #define TEST_PRECACHE_AND_REPLACE_CUSTOM_SOUNDS
 
+// ncl_upload_file() for the material preset. Nothing else is needed at map start: a
+// binding names the preset it comes from, and the client reads the file when it needs it.
+#define TEST_WEAPON_MATERIALS
+
+new const MAT_PRESET_FILE[] = "materials/test_nextclient/weapon_skins.mat";
+new const MAT_TEST_WEAPON_NAME[] = "weapon_glock18";
+
+// One per model: the stock glock and the test one under models/test_nextclient name their
+// slide texture differently, and which of the two is drawn depends on whether the model
+// replacement above is on.
+new const MAT_TEST_MATERIALS[][] = { "golden_slide", "golden_slide_test_model" };
+
 new const HUD_SPRITE_KILL[] = "sprites/test_nextclient/hud_sprites/kill.spr"
 new const HUD_SPRITE_BLACK_HOLE[] = "sprites/test_nextclient/hud_sprites/ef_blackhole_loop.spr"
 
@@ -53,6 +65,9 @@ public plugin_init() {
     register_concmd("ncl_hudsprite_clear",           "cmd_ncl_hudsprite_clear",          ADMIN_ALL); // ncl_clear_hud_sprite()
     register_concmd("ncl_test_override_weapon_sound","cmd_ncl_test_override_weapon_sound",ADMIN_ALL); // ncl_override_weapon_sound()
     register_concmd("ncl_test_override_weapon_sound_clear","cmd_ncl_test_override_weapon_sound_clear",ADMIN_ALL); // ncl_override_weapon_sound_clear()
+    register_concmd("ncl_test_mat_bind",             "cmd_ncl_test_mat_bind",            ADMIN_ALL); // ncl_mat_bind()
+    register_concmd("ncl_test_mat_unbind",           "cmd_ncl_test_mat_unbind",          ADMIN_ALL); // ncl_mat_clear()
+    register_concmd("ncl_test_mat_wear",             "cmd_ncl_test_mat_wear",            ADMIN_ALL, "[userid] <wear: 0.0 untouched, 1.0 fully worn>"); // ncl_mat_param_all()
     register_concmd("ncl_get_client_hwid",           "cmd_ncl_get_client_hwid",          ADMIN_ALL);
     register_concmd("ncl_is_hwid_received",           "cmd_ncl_is_hwid_received",         ADMIN_ALL);
 
@@ -849,6 +864,10 @@ public plugin_precache() {
     test_ncl_upload_file();
 #endif
 
+#if defined TEST_WEAPON_MATERIALS
+    test_ncl_mat_upload_preset();
+#endif
+
 #if defined TEST_PRECACHE_AND_REPLACE_CUSTOM_MODELS
     test_ncl_precache_and_replace_custom_model();
 #endif
@@ -883,6 +902,128 @@ public test_ncl_precache_and_replace_default_sound() {
     ncl_precache_sound("player/pl_step2.wav", "player/test_nextclient/pl_step2.wav" );
     ncl_precache_sound("player/pl_step3.wav", "player/test_nextclient/pl_step3.wav" );
     ncl_precache_sound("player/pl_step4.wav", "player/test_nextclient/pl_step4.wav" );
+}
+
+/* <=======> */
+
+public test_ncl_mat_upload_preset() {
+    log_to_file(LOG_FILE, "~ Testing weapon materials is active.");
+
+    // The preset travels as a file, by the same upload as everything else a client needs.
+    // Nothing announces it: a binding names it, and that is when the client reads it.
+    if (!ncl_upload_file(MAT_PRESET_FILE, MAT_PRESET_FILE)) {
+        log_to_file(LOG_FILE, "[ERROR] <material preset> Failed to upload %s", MAT_PRESET_FILE);
+        return;
+    }
+
+    log_to_file(LOG_FILE, "Material preset uploaded: %s", MAT_PRESET_FILE);
+    log_to_file(LOG_FILE, "* The client needs r_studio_shader 1 to draw materials at all.");
+    log_to_file(LOG_FILE, "* golden_*: brass, blotchy, tiled eight times over.");
+    log_to_file(LOG_FILE, "* blue_steel_*: blue, evenly scratched, once over.");
+    log_to_file(LOG_FILE, "* Two signs apart on purpose - a check where both outcomes look alike is not a check.");
+}
+
+public cmd_ncl_test_mat_bind(id) {
+    // From the server console the first argument names the player, so everything else is
+    // one place further along than it is when a player types the command themselves.
+    new bool:from_console = (id == 0);
+
+    if (from_console) {
+        id = find_player_ex(FindPlayer_MatchUserId, read_argv_int(1));
+
+        if (id == 0) {
+            log_amx("Player with userid #%i not found.", read_argv_int(1));
+            return PLUGIN_HANDLED;
+        }
+    }
+
+    new material[64];
+    read_argv(from_console ? 2 : 1, material, charsmax(material));
+
+    new weapon_ent = give_or_find_weapon(id, MAT_TEST_WEAPON_NAME);
+    if (weapon_ent <= 0) {
+        log_to_file(LOG_FILE, "[ERROR] <ncl_mat_bind> Failed to give or find %s for player: %n", MAT_TEST_WEAPON_NAME, id);
+        return PLUGIN_HANDLED;
+    }
+
+    engclient_cmd(id, MAT_TEST_WEAPON_NAME);
+
+    // Without an argument both are put on: only one of the two models is drawn, and which
+    // one depends on whether the model replacement is enabled above.
+    if (material[0] == EOS) {
+        for (new i = 0; i < sizeof(MAT_TEST_MATERIALS); i++) {
+            ncl_mat_bind(weapon_ent, MAT_PRESET_FILE, MAT_TEST_MATERIALS[i]);
+        }
+
+        log_to_file(LOG_FILE, "NATIVE <ncl_mat_bind> every test material put on %s (ent: %d) for player: %n", MAT_TEST_WEAPON_NAME, weapon_ent, id);
+    }
+    else if (!ncl_mat_bind(weapon_ent, MAT_PRESET_FILE, material)) {
+        log_to_file(LOG_FILE, "[ERROR] <ncl_mat_bind> Failed for ^"%s^" on ent %d", material, weapon_ent);
+        return PLUGIN_HANDLED;
+    }
+    else {
+        log_to_file(LOG_FILE, "NATIVE <ncl_mat_bind> ^"%s^" put on %s (ent: %d) for player: %n", material, MAT_TEST_WEAPON_NAME, weapon_ent, id);
+    }
+
+    log_to_file(LOG_FILE, "* Everyone who can see that weapon should see it, including players who join later.");
+
+    return PLUGIN_HANDLED;
+}
+
+public cmd_ncl_test_mat_unbind(id) {
+    if (id == 0) {
+        id = find_player_ex(FindPlayer_MatchUserId, read_argv_int(1));
+
+        if (id == 0) {
+            log_amx("Player with userid #%i not found.", read_argv_int(1));
+            return PLUGIN_HANDLED;
+        }
+    }
+
+    new weapon_ent = give_or_find_weapon(id, MAT_TEST_WEAPON_NAME);
+    if (weapon_ent <= 0) {
+        log_to_file(LOG_FILE, "[ERROR] <ncl_mat_unbind> Failed to find %s for player: %n", MAT_TEST_WEAPON_NAME, id);
+        return PLUGIN_HANDLED;
+    }
+
+    ncl_mat_clear(weapon_ent);
+
+    log_to_file(LOG_FILE, "NATIVE <ncl_mat_clear> called for %s (ent: %d), player: %n", MAT_TEST_WEAPON_NAME, weapon_ent, id);
+    log_to_file(LOG_FILE, "* The weapon should go back to its own textures.");
+
+    return PLUGIN_HANDLED;
+}
+
+public cmd_ncl_test_mat_wear(id) {
+    new bool:from_console = (id == 0);
+
+    if (from_console) {
+        id = find_player_ex(FindPlayer_MatchUserId, read_argv_int(1));
+
+        if (id == 0) {
+            log_amx("Player with userid #%i not found.", read_argv_int(1));
+            return PLUGIN_HANDLED;
+        }
+    }
+
+    new Float:wear = read_argv_float(from_console ? 2 : 1);
+
+    new weapon_ent = give_or_find_weapon(id, MAT_TEST_WEAPON_NAME);
+    if (weapon_ent <= 0) {
+        log_to_file(LOG_FILE, "[ERROR] <ncl_mat_param> Failed to find %s for player: %n", MAT_TEST_WEAPON_NAME, id);
+        return PLUGIN_HANDLED;
+    }
+
+    // uWear uses material units: 0.0 is untouched and 1.0 is fully worn.
+    if (!ncl_mat_param_all(weapon_ent, "uWear", wear)) {
+        log_to_file(LOG_FILE, "[ERROR] <ncl_mat_param_all> Failed for uWear on ent %d", weapon_ent);
+        return PLUGIN_HANDLED;
+    }
+
+    log_to_file(LOG_FILE, "NATIVE <ncl_mat_param_all> uWear set to %.6f material units on ent %d for player: %n", wear, weapon_ent, id);
+    log_to_file(LOG_FILE, "* 0.0 is untouched, 1.0 is fully worn. Bind a material first: a value has nowhere to go without one.");
+
+    return PLUGIN_HANDLED;
 }
 
 /* <=======> */

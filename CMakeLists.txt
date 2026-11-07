@@ -84,6 +84,7 @@ add_library(${PROJECT_NAME} SHARED
         src/api_access.h
         src/module_types.h
 
+        src/utils/UserMessageLimits.h
         src/utils/SizeBufWriter.h
         src/utils/SizeBufWriter.cpp
         src/utils/utilfuncs.h
@@ -93,6 +94,7 @@ add_library(${PROJECT_NAME} SHARED
         src/utils/string_utils.h
 
         src/natives/cvar_sandbox.cpp
+        src/natives/material.cpp
         src/natives/death_notice_wpn_icon.cpp
         src/natives/hud_sprite.cpp
         src/natives/miscellaneous.cpp
@@ -131,10 +133,13 @@ add_library(${PROJECT_NAME} SHARED
         src/services/ViewmodelFX.cpp
         src/services/ncl_entities/EntitySync.h
         src/services/ncl_entities/EntitySync.cpp
+        src/services/ncl_entities/EntitySyncPackets.cpp
         src/services/ncl_entities/PlayerEntitySync.h
         src/services/ncl_entities/PlayerEntitySync.cpp
         src/services/ncl_entities/WeaponEntitySync.h
         src/services/ncl_entities/WeaponEntitySync.cpp
+        src/services/ncl_entities/MaterialEntitySync.h
+        src/services/ncl_entities/MaterialEntitySync.cpp
         src/services/StringRegistry.h
         src/services/StringRegistry.cpp
         src/services/HealthNext.h
@@ -202,3 +207,56 @@ endif()
 add_custom_target(BUILD_AND_INSTALL_ALL ALL)
 add_dependencies(BUILD_AND_INSTALL_ALL BUILD_ALL)
 add_dependencies(BUILD_AND_INSTALL_ALL INSTALL_ALL)
+
+option(NEXTCLIENTAPI_BUILD_TESTS "Build engine-free server policy tests" OFF)
+set(NEXTCLIENTAPI_PAWN_COMPILER "" CACHE FILEPATH "AMX Mod X compiler for the optional Pawn plugin test")
+set(NEXTCLIENTAPI_PAWN_INCLUDE_DIR "" CACHE PATH "AMX Mod X and ReAPI include directory for the Pawn plugin test")
+if (NEXTCLIENTAPI_BUILD_TESTS)
+    enable_testing()
+    if (NEXTCLIENTAPI_PAWN_COMPILER AND NEXTCLIENTAPI_PAWN_INCLUDE_DIR)
+        add_test(NAME pawn-material-plugin COMMAND ${CMAKE_COMMAND}
+                "-DPAWN_COMPILER=${NEXTCLIENTAPI_PAWN_COMPILER}"
+                "-DPAWN_INCLUDE_DIR=${NEXTCLIENTAPI_PAWN_INCLUDE_DIR}"
+                "-DAPI_INCLUDE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/addons/amxmodx/scripting/include"
+                "-DPAWN_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/amxx_test/addons/amxmodx/scripting/test_nextclient_api.sma"
+                "-DPAWN_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/test_nextclient_api.amxx"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VerifyPawnPlugin.cmake")
+    elseif (NEXTCLIENTAPI_PAWN_COMPILER OR NEXTCLIENTAPI_PAWN_INCLUDE_DIR)
+        message(FATAL_ERROR "Set both NEXTCLIENTAPI_PAWN_COMPILER and NEXTCLIENTAPI_PAWN_INCLUDE_DIR for Pawn verification")
+    endif ()
+
+    add_executable(material-visibility-tests tests/MaterialVisibilityPolicyTests.cpp)
+    target_include_directories(material-visibility-tests PRIVATE src)
+    add_test(NAME material-visibility-policy COMMAND material-visibility-tests)
+
+    add_executable(entity-sync-packets-tests
+            tests/EntitySyncPacketsTests.cpp
+            src/services/ncl_entities/EntitySyncPackets.cpp)
+    target_include_directories(entity-sync-packets-tests PRIVATE src include)
+    add_test(NAME entity-sync-packets COMMAND entity-sync-packets-tests)
+
+    add_executable(material-entity-sync-tests
+            tests/MaterialEntitySyncTests.cpp
+            src/AmxContextGuard.cpp
+            src/services/NextClientVersion.cpp
+            src/services/StringRegistry.cpp
+            src/services/ncl_entities/EntitySync.cpp
+            src/services/ncl_entities/EntitySyncPackets.cpp
+            src/services/ncl_entities/MaterialEntitySync.cpp)
+    target_include_directories(material-entity-sync-tests PRIVATE
+            tests/fakes src include deps/openssl/include
+            deps/goldsrc/core/include deps/goldsrc/cssdk/include
+            deps/goldsrc/metamod/include deps/goldsrc/amxmodx/include)
+    target_compile_definitions(material-entity-sync-tests PRIVATE
+            HAS_CSSDK_LIB HAS_METAMOD_LIB HAS_MHOOKS_LIB HAS_AMXX_LIB USE_METAMOD NOMINMAX _CRT_SECURE_NO_WARNINGS
+            ELPP_THREAD_SAFE ELPP_DISABLE_DEFAULT_CRASH_HANDLING ELPP_NO_DEFAULT_LOG_FILE)
+    target_link_libraries(material-entity-sync-tests PRIVATE Pal::Sigslot kangaru::kangaru easyloggingpp::easyloggingpp)
+    foreach (scenario IN ITEMS repeated-preset-snapshot recipient-routing recipient-compatibility native-float-cells
+            invalid-index registration-boundary binding-admission parameter-admission
+            stale-unbind unbind-admission sync-identity same-identity reuse-before-bind reuse-before-param reuse-after-bind reuse-after-param
+            ownership-new-bind ownership-new-param ownership-new-clear ownership-new-unbind ownership-new-enable ownership-new-disable ownership-new-refresh
+            ownership-same-bind ownership-same-param ownership-same-clear ownership-same-unbind ownership-same-enable ownership-same-disable ownership-same-refresh
+            ownership-other-type)
+        add_test(NAME material-${scenario} COMMAND material-entity-sync-tests ${scenario})
+    endforeach ()
+endif ()

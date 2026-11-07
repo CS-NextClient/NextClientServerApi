@@ -26,6 +26,9 @@ private:
     void ClientConnectingHandler(ClientConnectingEvent event);
     void ClientDisconnectedHandler(ClientId client);
     void SendRegistration(ClientId client, uint16_t string_id, const std::string& str);
+
+public:
+    static bool IsRegistrable(const std::string& str);
 };
 
 struct StringRegistryService : kgr::single_service<StringRegistry, kgr::dependency<ServerEventsManagerService>>

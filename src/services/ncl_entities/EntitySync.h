@@ -48,6 +48,7 @@ public:
     void Destroy(uint16_t entity_id);
     void SetAnchor(uint16_t entity_id, const ncl_entity::VisibilityReference& visibility_ref);
     bool Exists(uint16_t entity_id) const;
+    bool IsBoundTo(uint16_t entity_id, uint8_t type_id, const cssdk::Edict* bound_edict, int serial_number) const;
 
 private:
     void ServerActivatedHandler(ServerActivatedEvent event);
@@ -55,7 +56,7 @@ private:
     void ClientDisconnectedHandler(ClientId client);
     void FrameHandler();
 
-    void ApplyFieldUpdate(
+    bool ApplyFieldUpdate(
         ncl_entity::SyncedEntity& entity,
         const ncl_entity::EntityTypeDescriptor& type,
         uint16_t field_bit,
@@ -65,11 +66,10 @@ private:
 
     bool IsEntityVisibleToClient(ClientId client, const ncl_entity::SyncedEntity& entity) const;
 
-    void SendEntityCreate(ClientId client, const ncl_entity::SyncedEntity& entity);
+    bool SendEntityCreate(ClientId client, const ncl_entity::SyncedEntity& entity);
     void SendEntityUpdate(ClientId client, const ncl_entity::SyncedEntity& entity, uint16_t field_mask);
     void SendEntityDestroy(ClientId client, const ncl_entity::SyncedEntity& entity);
 
-    void EnsureStringsForClient(ClientId client, const ncl_entity::SyncedEntity& entity);
     void BroadcastEntityUpdate(ncl_entity::SyncedEntity& entity, uint16_t field_mask);
 
     bool ClientSupportsEntitySync(ClientId client) const;
