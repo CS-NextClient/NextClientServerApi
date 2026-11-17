@@ -124,6 +124,11 @@ int NextClientApi::GetSupportedFeatures(ClientId client)
         features |= (FEATURE_WEAPON_SOUND_OVERRIDE | FEATURE_INVERT_MOUSE);
     }
 
+    if (version >= NextClientVersion{2, 6, 0})
+    {
+        features |= (FEATURE_MATERIALS | FEATURE_ADVANCED_RADAR);
+    }
+
     return features;
 }
 

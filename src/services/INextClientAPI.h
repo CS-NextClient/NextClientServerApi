@@ -19,5 +19,7 @@ enum NextClientFeatures
     FEATURE_DEATHMSG_WPN_ICON     = 1 << 6,
     FEATURE_WEAPON_SOUND_OVERRIDE = 1 << 7,
     FEATURE_INVERT_MOUSE          = 1 << 8,
+    FEATURE_MATERIALS             = 1 << 9,
+    FEATURE_ADVANCED_RADAR        = 1 << 10,
 };
 // clang-format on
