@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "materials": [
+    {
+      "name": "blue_gloves",
+      "texture": "view_glove.bmp",
+      "material": {
+        "program": "studio",
+        "params": {"uBaseTint": [0.15, 0.4, 1.0, 1.0]}
+      }
+    },
+    {
+      "name": "red_gloves",
+      "texture": "view_glove.bmp",
+      "material": {
+        "program": "studio",
+        "params": {"uBaseTint": [1.0, 0.15, 0.1, 1.0]}
+      }
+    }
+  ]
+}

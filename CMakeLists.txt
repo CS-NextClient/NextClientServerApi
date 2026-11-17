@@ -260,3 +260,28 @@ if (NEXTCLIENTAPI_BUILD_TESTS)
         add_test(NAME material-${scenario} COMMAND material-entity-sync-tests ${scenario})
     endforeach ()
 endif ()
+set(NEXTCLIENTAPI_PAWN_VM_DIR "" CACHE PATH "AMX Mod X compiler/amxxpc source directory for standalone stock tests")
+if (NEXTCLIENTAPI_BUILD_TESTS AND NEXTCLIENTAPI_PAWN_COMPILER AND NEXTCLIENTAPI_PAWN_INCLUDE_DIR)
+    add_test(NAME pawn-gloves-example COMMAND ${CMAKE_COMMAND}
+            "-DPAWN_COMPILER=${NEXTCLIENTAPI_PAWN_COMPILER}"
+            "-DPAWN_INCLUDE_DIR=${NEXTCLIENTAPI_PAWN_INCLUDE_DIR}"
+            "-DAPI_INCLUDE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/addons/amxmodx/scripting/include"
+            "-DPAWN_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/addons/amxmodx/scripting/nextclient_gloves_example.sma"
+            "-DPAWN_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/nextclient_gloves_example.amxx"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VerifyPawnPlugin.cmake")
+    if (NEXTCLIENTAPI_PAWN_VM_DIR)
+        find_package(Python3 REQUIRED COMPONENTS Interpreter)
+        add_executable(glove-stocks-runner tests/GloveStocksRunner.cpp "${NEXTCLIENTAPI_PAWN_VM_DIR}/amx.cpp")
+        target_compile_features(glove-stocks-runner PRIVATE cxx_std_20)
+        target_include_directories(glove-stocks-runner PRIVATE "${NEXTCLIENTAPI_PAWN_VM_DIR}")
+        target_compile_definitions(glove-stocks-runner PRIVATE AMX_NODYNALOAD HAVE_STDINT_H _CRT_SECURE_NO_WARNINGS)
+        add_test(NAME pawn-gloves-stocks COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/run_glove_stocks.py"
+                --compiler "${NEXTCLIENTAPI_PAWN_COMPILER}"
+                --include-dir "${NEXTCLIENTAPI_PAWN_INCLUDE_DIR}"
+                --api-include "${CMAKE_CURRENT_SOURCE_DIR}/addons/amxmodx/scripting/include"
+                --source "${CMAKE_CURRENT_SOURCE_DIR}/tests/GloveStocksTests.sma"
+                --output "${CMAKE_CURRENT_BINARY_DIR}/gloves-test.amxx"
+                --runner "$<TARGET_FILE:glove-stocks-runner>")
+    endif ()
+endif ()

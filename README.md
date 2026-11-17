@@ -3,6 +3,8 @@ NextClientServerApi is an amxmodx module that provides an API to interact with C
 
 See API functions in [next_client_api.inc](https://github.com/CS-NextClient/NextClientServerApi/blob/main/addons/amxmodx/scripting/include/next_client_api.inc).
 
+Player and per-weapon glove profiles are available through [next_client_gloves.inc](docs/gloves.md) ([Russian guide](docs/gloves.ru.md)).
+
 # Features
 
 - The cvar sandbox. Allows you to set the value of a cvar to the client and locks it to be changed by the client. cvar value on the client is reset to the user's value after disconnecting from the server.
